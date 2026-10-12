@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: ezha
+    runtime: python
+    plan: free
+    rootDir: .
+    buildCommand: python -m pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT "backend.app:create_app()"
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: SEED_DEMO_USERS
+        value: "false"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: artisan-portfolio
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
