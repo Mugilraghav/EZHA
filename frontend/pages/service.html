@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Service details for bridal makeup and custom beauty packages on EZHA." />
+    <title>Service Details | EZHA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/variables.css" />
+    <link rel="stylesheet" href="/static/css/components.css" />
+    <link rel="stylesheet" href="/static/css/responsive.css" />
+    <style>
+      body { background: #fffaf8; }
+      .service-page { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 28px; padding: 64px 0 90px; }
+      .service-gallery { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+      .service-gallery img { width: 100%; height: 100%; object-fit: cover; border-radius: 24px; }
+      .feature-list { display: grid; gap: 12px; margin: 20px 0; }
+      .feature-list span { color: var(--muted); }
+      .booking-card { background: #fff; border: 1px solid var(--border); border-radius: 24px; padding: 26px; box-shadow: 0 16px 36px rgba(36,33,36,0.04); position: sticky; top: 90px; }
+      .price { font-size: 2.1rem; font-weight: 800; color: var(--primary); }
+      @media (max-width: 980px) { .service-page { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container navbar">
+        <a class="brand" href="/" aria-label="EZHA home"><img class="brand-logo" src="/static/assets/ezha-logo.png" alt="EZHA | The Signature of Success" /></a>
+        <nav class="nav-links" aria-label="Main navigation">
+          <a href="/explore">Explore</a>
+          <a href="/category">Categories</a>
+          <a href="/vendor">Vendors</a>
+          <a href="/service">Services</a>
+        </nav>
+        <div class="nav-actions">
+          <button class="btn btn-ghost" type="button">Search</button>
+          <button class="btn btn-secondary" type="button">Login</button>
+          <button class="btn btn-primary" type="button">Get Started</button>
+          <button class="mobile-menu-toggle" type="button" aria-label="Open navigation menu">☰</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container service-page">
+      <section>
+        <span class="eyebrow">Bridal Makeup</span>
+        <h1 style="margin-top: 16px; font-size: clamp(2.3rem, 4vw, 3.6rem);">Signature Bridal Makeup</h1>
+        <div class="service-gallery" style="margin-top: 22px;">
+          <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1400&q=80" alt="Bridal makeup" />
+          <div style="display:grid; gap:16px;">
+            <img src="https://images.unsplash.com/photo-1521590832167-7b1d4d2679d8?auto=format&fit=crop&w=900&q=80" alt="Bridal style closeup" />
+            <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80" alt="Bridal portrait" />
+          </div>
+        </div>
+
+        <div class="feature-list">
+          <span><strong>Duration:</strong> 3 hours</span>
+          <span><strong>Service type:</strong> Studio / Doorstep</span>
+          <span><strong>Location:</strong> Chennai, Tamil Nadu</span>
+          <span><strong>Customization:</strong> HD Makeup, Airbrush, Hairstyling, Saree Draping, Lashes</span>
+        </div>
+
+        <div class="panel" style="margin-top: 20px;">
+          <span class="eyebrow">Description</span>
+          <p style="margin-top: 16px;">
+            A soft glam bridal finish tailored to your skin tone, outfit and wedding aesthetic. Includes personalised prep, contouring, lashes, and portrait-friendly finishing for photography and longevity throughout the day.
+          </p>
+        </div>
+      </section>
+
+      <aside class="booking-card">
+        <div class="vendor-header">
+          <h3>Ananya Bridal Studio</h3>
+          <span class="vendor-badge">✓ Verified</span>
+        </div>
+        <div class="price">₹8,000</div>
+        <p style="margin: 10px 0 18px; color: var(--muted);">Starting price inclusive of base prep and styling</p>
+        <a href="/vendor" class="btn btn-secondary" style="width:100%; margin-bottom: 12px;">View Artist</a>
+        <a href="/vendor" class="btn btn-primary" style="width:100%;">Customize & Book</a>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-bottom">
+        <span>© 2026 EZHA. All rights reserved.</span>
+        <span>Designed for premium Indian experiences.</span>
+      </div>
+    </footer>
+
+    <script src="/static/js/common.js"></script>
+  </body>
+</html>

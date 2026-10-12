@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create account | EZHA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/variables.css" />
+    <link rel="stylesheet" href="/static/css/components.css" />
+    <style>
+      .auth-layout { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(400px, .85fr); }
+      .auth-visual { min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 38px clamp(24px, 7vw, 100px); color: white; background: linear-gradient(180deg, rgba(28, 32, 26, .16), rgba(28, 32, 26, .72)), url('https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1500&q=85') center/cover; }
+      .auth-visual .brand { color: white; }
+      .auth-visual p { max-width: 440px; color: rgba(255,255,255,.84); font-size: 1.08rem; }
+      .auth-visual h1 { max-width: 570px; font-size: clamp(2.8rem, 5vw, 4.6rem); margin-bottom: 16px; }
+      .auth-main { display: grid; place-items: center; padding: 40px 24px; background: var(--background); }
+      .auth-form-wrap { width: min(100%, 430px); }
+      .auth-form-wrap h2 { margin: 22px 0 8px; font-size: 2.3rem; }
+      .auth-intro { margin-bottom: 24px; }
+      .auth-form { display: grid; gap: 13px; }
+      .auth-form label { display: grid; gap: 7px; font-size: .88rem; font-weight: 600; }
+      .auth-form input, .auth-form select { min-height: 48px; width: 100%; padding: 0 14px; border: 1px solid var(--border); border-radius: 10px; background: white; color: var(--text); }
+      .artisan-fields { display: grid; gap: 13px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: rgba(255,255,255,.65); }
+      .auth-form .btn { width: 100%; margin-top: 6px; }
+      .auth-message { min-height: 24px; color: var(--primary); font-size: .9rem; }
+      .auth-message[data-error="true"] { color: #a42336; }
+      .auth-switch { margin-top: 20px; font-size: .92rem; }
+      .auth-switch a { color: var(--primary); font-weight: 700; }
+      @media (max-width: 760px) { .auth-layout { grid-template-columns: 1fr; } .auth-visual { min-height: 240px; padding: 24px; } .auth-visual h1 { font-size: 2.2rem; } .auth-visual p { display: none; } .auth-main { min-height: calc(100vh - 240px); padding: 30px 22px 44px; } }
+    </style>
+  </head>
+  <body>
+    <main class="auth-layout">
+      <section class="auth-visual">
+        <a class="brand" href="/" aria-label="EZHA home"><img class="brand-logo" src="/static/assets/ezha-logo.png" alt="EZHA | The Signature of Success" /></a>
+        <div><span class="eyebrow" style="color:white;background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.2)">A marketplace for craft</span><h1>Your next chapter starts here.</h1><p>Find your people, share your work, and build a trusted presence around what you do best.</p></div>
+      </section>
+      <section class="auth-main">
+        <div class="auth-form-wrap">
+          <span class="eyebrow">Join EZHA</span>
+          <h2>Create your account</h2>
+          <p class="auth-intro">Choose how you’ll use EZHA. You can sign in with your username and password.</p>
+          <form class="auth-form" id="register-form">
+            <label>Create account as<select name="role" id="register-role" required><option value="CUSTOMER">Customer</option><option value="ARTISAN">Artisan</option></select></label>
+            <label>Your name<input name="name" autocomplete="name" required /></label>
+            <label>Username<input name="username" autocomplete="username" minlength="3" required /></label>
+            <label>Email<input name="email" type="email" autocomplete="email" required /></label>
+            <label>Password<input name="password" type="password" autocomplete="new-password" minlength="8" required /></label>
+            <div class="artisan-fields" id="artisan-fields" hidden>
+              <label>City<input name="city" autocomplete="address-level2" /></label>
+              <label>Your main category<select name="category"><option value="MAKEUP">Makeup</option><option value="MEHENDI">Mehendi</option><option value="DRESS">Dress</option><option value="FULL_PACKAGE">Full package</option></select></label>
+            </div>
+            <div class="auth-message" id="auth-message" role="status" aria-live="polite"></div>
+            <button class="btn btn-primary" type="submit">Create account</button>
+          </form>
+          <p class="auth-switch">Already registered? <a href="/login">Sign in</a></p>
+        </div>
+      </section>
+    </main>
+    <script src="/static/js/portal.js"></script>
+  </body>
+</html>

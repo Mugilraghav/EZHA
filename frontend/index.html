@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="EZHA connects customers with verified beauty, bridal, fashion and artisan professionals across India."
+    />
+    <title>EZHA | The Signature of Success</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/css/variables.css" />
+    <link rel="stylesheet" href="/static/css/components.css" />
+    <link rel="stylesheet" href="/static/css/responsive.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container navbar">
+        <a class="brand" href="/" aria-label="EZHA home">
+          <img class="brand-logo" src="/static/assets/ezha-logo.png" alt="EZHA | The Signature of Success" />
+        </a>
+
+        <nav class="nav-links" aria-label="Main navigation">
+          <a href="#explore">Explore</a>
+          <a href="#categories">Categories</a>
+          <a href="#how-it-works">How It Works</a>
+          <a href="#artists">Become an Artist</a>
+          <a href="#about">About</a>
+        </nav>
+
+        <div class="nav-actions">
+          <button class="btn btn-ghost" type="button" data-focus-search>Search</button>
+          <a class="btn btn-secondary" id="header-login" href="/login">Login</a>
+          <a class="btn btn-primary" id="header-register" href="/register">Get Started</a>
+          <a class="btn btn-secondary" id="header-portal" href="/login" hidden>My EZHA</a>
+          <button class="btn btn-ghost" id="header-logout" type="button" data-logout hidden>Sign out</button>
+          <button class="mobile-menu-toggle" type="button" aria-label="Open navigation menu">☰</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <span class="eyebrow">Trusted talent marketplace</span>
+            <h1>Your Style. Your Artist. Your Signature.</h1>
+            <p class="lead">
+              Discover trusted beauty, bridal, fashion and artisan professionals — and book the
+              service your way.
+            </p>
+
+            <form class="hero-search" id="landing-search-form" aria-label="Search for services and locations">
+              <label class="field" for="service-search">
+                <span>What service are you looking for?</span>
+                <input id="service-search" type="text" placeholder="Bridal makeup, mehendi, tailoring..." />
+              </label>
+              <label class="field" for="location-search">
+                <span>Where do you need it?</span>
+                <input id="location-search" type="text" placeholder="Chennai, Bengaluru, Mumbai..." />
+              </label>
+              <button class="btn btn-primary" type="submit">Find My Artist</button>
+            </form>
+
+            <div class="trust-points" aria-label="Trust indicators">
+              <span><strong>4.9/5</strong> average rating</span>
+              <span><strong>10k+</strong> bookings</span>
+              <span><strong>800+</strong> verified artists</span>
+            </div>
+          </div>
+
+          <div class="hero-visual" aria-label="Featured artist preview">
+            <div class="image-card">
+              <img
+                src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80"
+                alt="Bridal makeup artist preparing a client"
+              />
+            </div>
+            <div class="float-card">
+              <span class="rating-chip">★ 4.9</span>
+              <h3>Ananya Bridal Studio</h3>
+              <p>Bridal Makeup • Chennai</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="categories" class="section">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Explore by category</span>
+              <h2>Popular services for every occasion</h2>
+            </div>
+            <a href="/customer/services" class="btn btn-secondary">Browse all</a>
+          </div>
+
+          <div class="category-grid">
+            <article class="category-card">
+              <div class="category-icon">💍</div>
+              <h3>Bridal</h3>
+              <p>Makeup, hair styling, mehendi, saree draping and full wedding packages.</p>
+            </article>
+            <article class="category-card">
+              <div class="category-icon">✨</div>
+              <h3>Beauty</h3>
+              <p>Facials, skin care, hair styling, makeup and wellness-led beauty rituals.</p>
+            </article>
+            <article class="category-card">
+              <div class="category-icon">🎨</div>
+              <h3>Mehendi</h3>
+              <p>Traditional, Arabic and bridal mehendi artistry for meaningful celebrations.</p>
+            </article>
+            <article class="category-card">
+              <div class="category-icon">🧵</div>
+              <h3>Tailoring</h3>
+              <p>Custom blouse, dress stitching and alteration for your perfect fit.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="explore" class="section" style="background: rgba(255, 255, 255, 0.4);">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Featured artists</span>
+              <h2>Handpicked professionals for signature experiences</h2>
+            </div>
+            <a href="/customer/services" class="btn btn-secondary">View all artists</a>
+          </div>
+
+          <div class="vendor-grid">
+            <article class="vendor-card">
+              <img
+                src="https://images.unsplash.com/photo-1521590832167-7b1d4d2679d8?auto=format&fit=crop&w=900&q=80"
+                alt="Bridal makeup artist portrait"
+              />
+              <div class="vendor-content">
+                <div class="vendor-header">
+                  <h3>Aditi Mehra</h3>
+                  <span class="vendor-badge">✓ Verified</span>
+                </div>
+                <p>Bridal Makeup • Bengaluru</p>
+                <div class="vendor-meta">
+                  <span>★ 4.9</span>
+                  <span>108 reviews</span>
+                  <span>9 years</span>
+                </div>
+                <div class="vendor-price">Starting at ₹8,000</div>
+                <div class="card-footer">
+                  <span class="rating-inline">⭐ 4.9</span>
+                  <a class="btn btn-primary" href="/customer/services?service_id=svc_001">Book now</a>
+                </div>
+              </div>
+            </article>
+
+            <article class="vendor-card">
+              <img
+                src="https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=900&q=80"
+                alt="Mehendi artist portrait"
+              />
+              <div class="vendor-content">
+                <div class="vendor-header">
+                  <h3>Naina Studio</h3>
+                  <span class="vendor-badge">✓ Verified</span>
+                </div>
+                <p>Fashion Styling • Delhi</p>
+                <div class="vendor-meta">
+                  <span>★ 4.8</span>
+                  <span>92 reviews</span>
+                  <span>7 years</span>
+                </div>
+                <div class="vendor-price">Starting at ₹2,500</div>
+                <div class="card-footer">
+                  <span class="rating-inline">⭐ 4.8</span>
+                  <a class="btn btn-primary" href="/customer/services?service_id=svc_002">Book now</a>
+                </div>
+              </div>
+            </article>
+
+            <article class="vendor-card">
+              <img
+                src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80"
+                alt="Fashion designer portrait"
+              />
+              <div class="vendor-content">
+                <div class="vendor-header">
+                  <h3>Saffron Atelier</h3>
+                  <span class="vendor-badge">✓ Verified</span>
+                </div>
+                <p>Bridal Wear • Mumbai</p>
+                <div class="vendor-meta">
+                  <span>★ 4.9</span>
+                  <span>140 reviews</span>
+                  <span>12 years</span>
+                </div>
+                <div class="vendor-price">Starting at ₹15,000</div>
+                <div class="card-footer">
+                  <span class="rating-inline">⭐ 4.9</span>
+                  <a class="btn btn-primary" href="/customer/services?service_id=svc_003">Book now</a>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="how-it-works" class="section">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">How EZHA works</span>
+              <h2>From discovery to booking, made effortless</h2>
+            </div>
+          </div>
+
+          <div class="steps-grid">
+            <article class="step-card">
+              <div class="step-number">1</div>
+              <h3>Discover</h3>
+              <p>Search by service, category, vibe or city and shortlist the right artist for your moment.</p>
+            </article>
+            <article class="step-card">
+              <div class="step-number">2</div>
+              <h3>Customize</h3>
+              <p>Build your perfect package with add-ons, colors, timings, and inspiration images.</p>
+            </article>
+            <article class="step-card">
+              <div class="step-number">3</div>
+              <h3>Book with confidence</h3>
+              <p>Choose a slot, pay securely, receive confirmation and track the service in real time.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="about" class="section" style="background: rgba(245, 232, 184, 0.18);">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Why customers trust EZHA</span>
+              <h2>Premium, transparent, and built for memorable experiences</h2>
+            </div>
+          </div>
+
+          <div class="trust-grid">
+            <article class="trust-card">
+              <div class="trust-icon">✓</div>
+              <h3>Verified professionals</h3>
+              <p>All artists are reviewed and verified before they appear publicly.</p>
+            </article>
+            <article class="trust-card">
+              <div class="trust-icon">💬</div>
+              <h3>Clear communication</h3>
+              <p>Discuss your vision, requirements and service details before booking.</p>
+            </article>
+            <article class="trust-card">
+              <div class="trust-icon">💳</div>
+              <h3>Secure payments</h3>
+              <p>Transparent pricing and secure checkout designed for modern Indian bookings.</p>
+            </article>
+            <article class="trust-card">
+              <div class="trust-icon">⭐</div>
+              <h3>Verified reviews</h3>
+              <p>Ratings and feedback help you choose artists with confidence.</p>
+            </article>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-box">
+              <strong>10k+</strong>
+              <span>Bookings completed</span>
+            </div>
+            <div class="stat-box">
+              <strong>800+</strong>
+              <span>Verified artists</span>
+            </div>
+            <div class="stat-box">
+              <strong>4.9/5</strong>
+              <span>Customer rating</span>
+            </div>
+            <div class="stat-box">
+              <strong>24/7</strong>
+              <span>Support access</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="artists" class="section">
+        <div class="container">
+          <div class="cta-banner">
+            <span class="eyebrow" style="background: rgba(255,255,255,0.12); color: white; border-color: rgba(255,255,255,0.15);">Become an EZHA artist</span>
+            <h2>Grow your booking pipeline with a premium audience.</h2>
+            <p>Create your profile, show your portfolio, and get discovered by customers who value craft and trust.</p>
+            <a href="/register?role=ARTISAN" class="btn btn-secondary" style="background: #fff; color: var(--primary);">Join EZHA</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <a class="brand" href="/" aria-label="EZHA home">
+              <img class="brand-logo" src="/static/assets/ezha-logo.png" alt="EZHA | The Signature of Success" />
+            </a>
+            <p>
+              Your style is personal. Your artist should be too. Discover trusted beauty, bridal and
+              fashion professionals across India.
+            </p>
+          </div>
+
+          <div class="footer-col">
+            <h4>Explore</h4>
+            <ul>
+              <li>Beauty</li>
+              <li>Bridal</li>
+              <li>Mehendi</li>
+              <li>Aari</li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <h4>For Artists</h4>
+            <ul>
+              <li><a href="/register?role=ARTISAN">Become an Artist</a></li>
+              <li><a href="/login?role=ARTISAN">Artist Login</a></li>
+              <li>Guidelines</li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <h4>Support</h4>
+            <ul>
+              <li>Help Center</li>
+              <li>Contact</li>
+              <li>Cancellation</li>
+              <li>Refunds</li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <h4>Company</h4>
+            <ul>
+              <li>About</li>
+              <li>Terms</li>
+              <li>Privacy</li>
+              <li>Grievance</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <span>© 2026 EZHA. All rights reserved.</span>
+          <span>Designed for premium Indian experiences.</span>
+        </div>
+      </div>
+    </footer>
+
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/portal.js"></script>
+  </body>
+</html>

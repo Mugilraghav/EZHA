@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Browse EZHA categories for bridal, beauty, mehendi, tailoring, and more." />
+    <title>Categories | EZHA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/variables.css" />
+    <link rel="stylesheet" href="/static/css/components.css" />
+    <link rel="stylesheet" href="/static/css/responsive.css" />
+    <style>
+      body { background: #fffaf8; }
+      .page-shell { padding: 64px 0 90px; }
+      .category-hero { margin-bottom: 40px; }
+      .category-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+      .category-card-large { background: #fff; border: 1px solid var(--border); border-radius: 28px; padding: 28px; box-shadow: 0 16px 32px rgba(36,33,36,0.04); }
+      .category-chip { display: inline-block; padding: 6px 12px; border-radius: 999px; background: rgba(110, 33, 66, 0.08); color: var(--primary); font-weight: 700; margin-bottom: 12px; }
+      .service-list { display: grid; gap: 10px; margin-top: 16px; color: var(--muted); }
+      @media (max-width: 980px) { .category-grid { grid-template-columns: 1fr 1fr; } }
+      @media (max-width: 640px) { .category-grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container navbar">
+        <a class="brand" href="/" aria-label="EZHA home"><img class="brand-logo" src="/static/assets/ezha-logo.png" alt="EZHA | The Signature of Success" /></a>
+        <nav class="nav-links" aria-label="Main navigation">
+          <a href="/explore">Explore</a>
+          <a href="/category">Categories</a>
+          <a href="/vendor">Vendors</a>
+          <a href="/service">Services</a>
+        </nav>
+        <div class="nav-actions">
+          <button class="btn btn-ghost" type="button">Search</button>
+          <button class="btn btn-secondary" type="button">Login</button>
+          <button class="btn btn-primary" type="button">Get Started</button>
+          <button class="mobile-menu-toggle" type="button" aria-label="Open navigation menu">☰</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <div class="container">
+        <div class="category-hero">
+          <span class="eyebrow">Category discovery</span>
+          <h1 style="margin-top: 16px; font-size: clamp(2.4rem, 4vw, 3.5rem);">Find the perfect service for your moment</h1>
+        </div>
+
+        <div class="category-grid">
+          <article class="category-card-large">
+            <div class="category-chip">Bridal</div>
+            <h3>Bridal Makeup</h3>
+            <p>Signature bridal looks, pre-wedding fine-tuning, and full-day artistry support.</p>
+            <div class="service-list">
+              <span>Bridal Hair Styling</span>
+              <span>Bridal Mehendi</span>
+              <span>Bridal Saree Draping</span>
+              <span>Complete Bridal Packages</span>
+            </div>
+          </article>
+
+          <article class="category-card-large">
+            <div class="category-chip">Beauty</div>
+            <h3>Beauty & Glow</h3>
+            <p>Makeup, hair styling, facial and skin care services curated for every occasion.</p>
+            <div class="service-list">
+              <span>Makeup</span>
+              <span>Hair Styling</span>
+              <span>Skin Care</span>
+              <span>Beauty Services</span>
+            </div>
+          </article>
+
+          <article class="category-card-large">
+            <div class="category-chip">Mehendi</div>
+            <h3>Henna Art</h3>
+            <p>Traditional and contemporary designs for weddings, rituals and celebrations.</p>
+            <div class="service-list">
+              <span>Traditional Mehendi</span>
+              <span>Arabic Mehendi</span>
+              <span>Custom Mehendi</span>
+              <span>Bridal Mehendi</span>
+            </div>
+          </article>
+
+          <article class="category-card-large">
+            <div class="category-chip">Aari</div>
+            <h3>Aari Embroidery</h3>
+            <p>Elegant bridal blouse art, designer saree embroidery and bespoke detailing.</p>
+            <div class="service-list">
+              <span>Bridal Blouse</span>
+              <span>Saree Embroidery</span>
+              <span>Custom Aari Work</span>
+              <span>Designer Blouse</span>
+            </div>
+          </article>
+
+          <article class="category-card-large">
+            <div class="category-chip">Tailoring</div>
+            <h3>Custom Stitching</h3>
+            <p>Well-fitted blouses, dresses, custom tailoring and alteration services.</p>
+            <div class="service-list">
+              <span>Blouse Stitching</span>
+              <span>Dress Stitching</span>
+              <span>Saree Blouse Alteration</span>
+              <span>Custom Stitching</span>
+            </div>
+          </article>
+
+          <article class="category-card-large">
+            <div class="category-chip">Doorstep</div>
+            <h3>Home Services</h3>
+            <p>Personalized beauty and artistry at home, on your schedule and in your comfort.</p>
+            <div class="service-list">
+              <span>Home Makeup</span>
+              <span>Home Mehendi</span>
+              <span>Home Beauty</span>
+              <span>Tailoring Consultation</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-bottom">
+        <span>© 2026 EZHA. All rights reserved.</span>
+        <span>Designed for premium Indian experiences.</span>
+      </div>
+    </footer>
+
+    <script src="/static/js/common.js"></script>
+  </body>
+</html>
