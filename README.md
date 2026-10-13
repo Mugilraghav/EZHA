@@ -85,7 +85,7 @@ Demo accounts (username and password):
 | Artisan | `ananya` | `demo123` |
 | Admin | `admin` | `demo123` |
 
-The artisan workspace supports portfolio image uploads, customer browsing, bookings, and payment status. Customer and artisan profiles, categorized portfolio work, and bookings persist in the configured database. Payment settlement requires Razorpay credentials.
+The artisan workspace supports portfolio image uploads, customer browsing, bookings, and payment status. Customer and artisan profiles, categorized portfolio work, and bookings persist in the configured database. Payment settlement requires Razorpay credentials. When a customer pays, EZHA records a **15% platform commission** and schedules the **85% artisan share** to the bank account (account number + IFSC) the artisan provides at registration or in the artisan dashboard. Automated Razorpay Route transfers to linked accounts can be enabled when production keys are configured.
 
 To use a hosted free PostgreSQL database, create a project with your provider, copy its PostgreSQL connection URL into `.env` as `DATABASE_URL`, and keep `.env` private. `psycopg2-binary` is already included. SQLite is used automatically when `DATABASE_URL` is not set.
 
