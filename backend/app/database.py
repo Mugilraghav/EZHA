@@ -64,6 +64,15 @@ def initialize_database(app: Flask) -> None:
         for column_name, statement in booking_alters.items():
             if column_name not in booking_columns:
                 connection.execute(text(statement))
+    booking_columns = {column["name"] for column in inspect(engine).get_columns("bookings")}
+    booking_extra = {
+        "acceptance_deadline": "ALTER TABLE bookings ADD COLUMN acceptance_deadline DATETIME",
+        "artisan_decision": "ALTER TABLE bookings ADD COLUMN artisan_decision VARCHAR(24) NOT NULL DEFAULT 'PENDING'",
+    }
+    with engine.begin() as connection:
+        for column_name, statement in booking_extra.items():
+            if column_name not in booking_columns:
+                connection.execute(text(statement))
     artisan_columns = {column["name"] for column in inspect(engine).get_columns("artisan_profiles")}
     artisan_alters = {
         "account_holder_name": "ALTER TABLE artisan_profiles ADD COLUMN account_holder_name VARCHAR(160) NOT NULL DEFAULT ''",

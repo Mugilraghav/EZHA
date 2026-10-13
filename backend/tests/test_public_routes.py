@@ -12,6 +12,7 @@ class TestConfig:
     DATABASE_URL = "sqlite:///:memory:"
     RAZORPAY_KEY_ID = ""
     RAZORPAY_KEY_SECRET = ""
+    PORTFOLIO_LISTING_BUFFER_MINUTES = 0
 
 
 DOORSTEP_ADDRESS = {

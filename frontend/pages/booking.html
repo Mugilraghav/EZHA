@@ -27,10 +27,16 @@
       .summary-line { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; color: var(--muted); }
       .summary-line.total { color: var(--text); font-weight: 800; font-size: 1.1rem; }
       .upload-box { margin-top: 20px; border: 1.5px dashed rgba(110,33,66,0.28); border-radius: 18px; background: rgba(110,33,66,0.03); padding: 20px; }
+      .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
+      .calendar-day { padding: 8px 4px; text-align: center; border-radius: 8px; border: 1px solid var(--border); font-size: .82rem; }
+      .calendar-day.available { background: rgba(16,124,83,.12); color: #0f7a50; }
+      .calendar-day.blocked, .calendar-day.partial { background: rgba(185,28,28,.15); color: #991b1b; font-weight: 700; }
+      .calendar-day.selected { outline: 2px solid var(--primary); }
       @media (max-width: 980px) { .booking-page { grid-template-columns: 1fr; } }
     </style>
   </head>
   <body data-requires-role="CUSTOMER">
+    <div class="ezha-tagline-ribbon">Signature of success</div>
     <header class="site-header">
       <div class="container navbar">
         <a class="brand" href="/" aria-label="EZHA home"><img class="brand-logo" src="/static/assets/ezha-logo.png" alt="EZHA | The Signature of Success" /></a>
@@ -65,8 +71,14 @@
             <label class="field">State<input name="address_state" required autocomplete="address-level1" /></label>
             <label class="field">PIN code<input name="pincode" required inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="postal-code" /></label>
           </fieldset>
-          <label class="field">Preferred date<input type="date" name="date" required /></label>
-          <label class="field">Preferred time<input type="time" name="time" required /></label>
+          <div id="artisan-calendar-panel" hidden>
+            <p style="font-weight:700;margin-bottom:4px">Artisan availability</p>
+            <p style="color:var(--muted);font-size:.9rem">Red dates are unavailable. Your selected slot updates this calendar.</p>
+            <div class="calendar-grid" id="artisan-calendar-grid" aria-live="polite"></div>
+          </div>
+          <label class="field">Preferred date<input type="date" name="date" id="booking-date" required /></label>
+          <label class="field">Preferred time<input type="time" name="time" id="booking-time" required /></label>
+          <p id="slot-availability-message" role="status" style="color:var(--primary);font-size:.9rem"></p>
           <label class="field">Notes for the artisan<textarea name="notes" maxlength="1000" rows="4" placeholder="Parking instructions, occasion details, or tailoring notes."></textarea></label>
           <p id="booking-message" role="status"></p>
           <button class="btn btn-primary" type="submit">Continue to checkout</button>

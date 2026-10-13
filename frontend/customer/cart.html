@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your cart | EZHA</title>
+    <link rel="stylesheet" href="/static/css/variables.css" />
+    <link rel="stylesheet" href="/static/css/components.css" />
+    <link rel="stylesheet" href="/static/css/theme.css" />
+    <style>
+      .cart-main { padding: 48px 0 80px; }
+      .cart-grid { display: grid; gap: 14px; margin-top: 24px; }
+      .cart-row { display: grid; grid-template-columns: 88px 1fr auto; gap: 14px; align-items: center; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: #fff; }
+      .cart-row img { width: 88px; height: 66px; object-fit: cover; border-radius: 8px; }
+      .cart-actions { display: flex; flex-direction: column; gap: 8px; }
+      .customer-nav { display: flex; gap: 16px; align-items: center; }
+      .cart-badge { min-width: 22px; height: 22px; border-radius: 999px; background: #b91c1c; color: #fde047; font-size: 0.75rem; font-weight: 800; display: inline-grid; place-items: center; padding: 0 6px; }
+    </style>
+  </head>
+  <body data-requires-role="CUSTOMER">
+    <div class="ezha-tagline-ribbon">Signature of success</div>
+    <header class="site-header">
+      <div class="container navbar">
+        <a class="brand" href="/"><img class="brand-logo" src="/static/assets/ezha-logo.png" alt="EZHA" /></a>
+        <nav class="customer-nav">
+          <a href="/customer/services">Discover</a>
+          <a href="/customer/cart">Cart <span class="cart-badge" id="cart-count" hidden>0</span></a>
+          <button class="btn btn-secondary" type="button" data-logout>Sign out</button>
+        </nav>
+      </div>
+    </header>
+    <main class="container cart-main">
+      <span class="eyebrow">Your cart</span>
+      <h1 style="margin-top:16px">Services ready to book</h1>
+      <div class="cart-grid" id="cart-items"><p class="empty-state">Your cart is empty.</p></div>
+      <a class="btn btn-secondary" href="/customer/services" style="margin-top:24px">Continue shopping</a>
+    </main>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/cart.js"></script>
+    <script src="/static/js/portal.js"></script>
+  </body>
+</html>

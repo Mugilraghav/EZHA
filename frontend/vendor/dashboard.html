@@ -133,6 +133,16 @@
         <p>Order alerts and payment updates when EZHA receives customer payments.</p>
         <div class="notification-list" id="artisan-notifications"><p class="empty-state">Loading…</p></div>
       </section>
+      <section class="panel" id="calendar" style="margin-top: 26px;">
+        <h2>Availability calendar</h2>
+        <p>Mark days you are unavailable. Customers see these in red when booking.</p>
+        <form class="payout-form" id="calendar-block-form">
+          <label>Date<input name="block_date" type="date" required /></label>
+          <label>Reason<input name="reason" placeholder="Personal day off" /></label>
+          <button class="btn btn-primary" type="submit">Block this date</button>
+        </form>
+        <p id="calendar-block-message" role="status"></p>
+      </section>
       <section class="panel" id="payments" style="margin-top: 26px;">
         <h2>Payout bank account</h2>
         <p>EZHA keeps a 15% commission; the remaining 85% is transferred to this account after each paid booking.</p>

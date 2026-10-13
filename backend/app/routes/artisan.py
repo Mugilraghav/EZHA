@@ -8,7 +8,11 @@ from sqlalchemy import select
 from werkzeug.utils import secure_filename
 
 from backend.app.auth import auth_service
-from backend.app.models.user import ArtisanNotification, ArtisanProfile, Booking, PortfolioWork, User
+from datetime import datetime, timezone
+
+from backend.app.models.user import ArtisanCalendarBlock, ArtisanNotification, ArtisanProfile, Booking, CustomerProfile, PortfolioWork, User
+from backend.app.services.booking_lifecycle import process_expired_acceptance_deadlines
+from backend.app.services.notifications import notify_customer
 from backend.app.services.commission import platform_commission_rate
 from backend.app.services.payouts import mask_account_number, validate_bank_details
 from backend.app.services.storage import StorageUploadError, SupabaseStorage, portfolio_image_url
@@ -60,10 +64,13 @@ def dashboard():
         return error
 
     with current_app.extensions["ezha_session_factory"]() as session:
+        process_expired_acceptance_deadlines(session)
+        session.commit()
         booking_rows = session.execute(
-            select(Booking, PortfolioWork, User)
+            select(Booking, PortfolioWork, User, CustomerProfile)
             .join(PortfolioWork, PortfolioWork.id == Booking.work_id)
             .join(User, User.id == Booking.customer_id)
+            .outerjoin(CustomerProfile, CustomerProfile.customer_id == User.id)
             .where(Booking.artisan_id == claims["sub"])
             .order_by(Booking.created_at.desc())
         ).all()
@@ -77,15 +84,22 @@ def dashboard():
         bookings = [{
             "id": booking.id,
             "customer": customer.name,
+            "customer_phone": (profile.phone if profile and profile.phone else customer.phone),
+            "customer_email": customer.email,
             "service": work.title,
             "date": booking.service_date,
+            "time": booking.service_time,
             "status": booking.status,
             "amount": booking.amount,
             "artisan_payout": booking.artisan_payout or booking.amount,
             "payment_status": booking.payment_status,
+            "artisan_decision": booking.artisan_decision,
+            "acceptance_deadline": booking.acceptance_deadline.isoformat() if booking.acceptance_deadline else None,
             "service_mode": booking.service_mode,
             "service_address": f"{booking.service_address_line1}, {booking.service_city} {booking.service_pincode}",
-        } for booking, work, customer in booking_rows]
+            "notes": booking.notes,
+            "can_respond": booking.payment_status == "PAID" and booking.artisan_decision == "PENDING",
+        } for booking, work, customer, profile in booking_rows]
     demo_orders = ([
         {"id": "ord_2001", "customer": "Meera S.", "service": "Bridal Makeup Trial", "date": "2026-11-15", "status": "CONFIRMED", "amount": 8500},
         {"id": "ord_2002", "customer": "Rhea K.", "service": "Bridal Makeup Trial", "date": "2026-11-18", "status": "PENDING", "amount": 8500},
@@ -175,6 +189,107 @@ def update_payout_profile():
         profile.account_number = str(payload.get("account_number", "")).strip()[:32]
         profile.ifsc_code = str(payload.get("ifsc_code", "")).strip().upper()[:11]
     return jsonify({"success": True, "message": "Payout bank details saved. EZHA will transfer your 85% share after each paid booking."}), 200
+
+
+@bp.post("/orders/<booking_id>/accept")
+def accept_order(booking_id):
+    claims, error = _artisan_claims()
+    if error:
+        return error
+    with current_app.extensions["ezha_session_factory"].begin() as session:
+        booking = session.scalar(select(Booking).where(Booking.id == booking_id, Booking.artisan_id == claims["sub"]))
+        if not booking:
+            return jsonify({"success": False, "error": {"code": "NOT_FOUND", "message": "Order not found"}}), 404
+        if booking.payment_status != "PAID" or booking.artisan_decision != "PENDING":
+            return jsonify({"success": False, "error": {"code": "INVALID_STATE", "message": "This order cannot be accepted"}}), 409
+        artisan = session.get(User, booking.artisan_id)
+        booking.artisan_decision = "ACCEPTED"
+        booking.status = "CONFIRMED"
+        booking.payout_status = "SCHEDULED"
+        order_ref = booking.id[:8].upper()
+        notify_customer(
+            session,
+            booking.customer_id,
+            "ORDER_ACCEPTED",
+            f"Artisan accepted order {order_ref}",
+            f"{artisan.name if artisan else 'Your artisan'} accepted your booking on {booking.service_date} at {booking.service_time}. Mobile: {artisan.phone if artisan else ''}.",
+            booking.id,
+        )
+    return jsonify({"success": True, "message": "Order accepted. The customer has been notified."}), 200
+
+
+@bp.post("/orders/<booking_id>/reject")
+def reject_order(booking_id):
+    claims, error = _artisan_claims()
+    if error:
+        return error
+    with current_app.extensions["ezha_session_factory"].begin() as session:
+        booking = session.scalar(select(Booking).where(Booking.id == booking_id, Booking.artisan_id == claims["sub"]))
+        if not booking:
+            return jsonify({"success": False, "error": {"code": "NOT_FOUND", "message": "Order not found"}}), 404
+        if booking.payment_status != "PAID" or booking.artisan_decision != "PENDING":
+            return jsonify({"success": False, "error": {"code": "INVALID_STATE", "message": "This order cannot be rejected"}}), 409
+        booking.artisan_decision = "REJECTED"
+        booking.status = "CANCELLED"
+        booking.payment_status = "REFUNDED"
+        booking.payout_status = "CANCELLED"
+        order_ref = booking.id[:8].upper()
+        notify_customer(
+            session,
+            booking.customer_id,
+            "ORDER_REFUNDED",
+            f"Order {order_ref} refunded",
+            f"The artisan declined this booking. ₹{booking.amount} will be returned to your payment method.",
+            booking.id,
+        )
+    return jsonify({"success": True, "message": "Order rejected and refund initiated for the customer."}), 200
+
+
+@bp.get("/calendar/blocks")
+def list_calendar_blocks():
+    claims, error = _artisan_claims()
+    if error:
+        return error
+    with current_app.extensions["ezha_session_factory"]() as session:
+        blocks = session.scalars(
+            select(ArtisanCalendarBlock)
+            .where(ArtisanCalendarBlock.artisan_id == claims["sub"])
+            .order_by(ArtisanCalendarBlock.block_date.desc())
+            .limit(60)
+        ).all()
+    return jsonify({
+        "success": True,
+        "data": {"blocks": [{
+            "id": block.id,
+            "block_date": block.block_date,
+            "start_time": block.start_time,
+            "end_time": block.end_time,
+            "reason": block.reason,
+        } for block in blocks]},
+    }), 200
+
+
+@bp.post("/calendar/blocks")
+def add_calendar_block():
+    claims, error = _artisan_claims()
+    if error:
+        return error
+    payload = request.get_json(silent=True) or {}
+    block_date = str(payload.get("block_date", "")).strip()
+    if len(block_date) != 10:
+        return jsonify({"success": False, "error": {"code": "INVALID_DATE", "message": "Use YYYY-MM-DD"}}), 400
+    with current_app.extensions["ezha_session_factory"].begin() as session:
+        block = ArtisanCalendarBlock(
+            artisan_id=claims["sub"],
+            block_date=block_date,
+            start_time=str(payload.get("start_time", "")).strip()[:5],
+            end_time=str(payload.get("end_time", "")).strip()[:5],
+            reason=str(payload.get("reason", "Unavailable"))[:200],
+        )
+        session.add(block)
+        session.flush()
+        block_id = block.id
+    return jsonify({"success": True, "data": {"id": block_id}, "message": "Unavailable time saved"}), 201
 
 
 @bp.post("/notifications/<notification_id>/read")

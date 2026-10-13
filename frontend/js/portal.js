@@ -202,10 +202,10 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelector('#booking-message').textContent = 'Choose a portfolio work before booking.';
       form.querySelector('button[type="submit"]').disabled = true;
     } else {
-      apiGet('/api/v1/customers/artisans').then((data) => {
-        const artisan = data.artisans.find((entry) => entry.works.some((work) => work.id === workId));
-        const work = artisan?.works.find((entry) => entry.id === workId);
-        if (!artisan || !work) throw new Error('This work is no longer available. Return to the catalog to choose another.');
+      apiGet('/api/v1/customers/works?per_page=48').then((data) => {
+        const work = (data.works || []).find((entry) => entry.id === workId);
+        if (!work) throw new Error('This work is no longer available. Return to the catalog to choose another.');
+        const artisan = { id: work.artisan_id, name: work.artisan_name, city: work.artisan_city };
         document.querySelector('#booking-title').textContent = work.title;
         document.querySelector('#booking-artisan').textContent = `${artisan.name} · ${artisan.city || 'India'} · Artisan ID ${artisan.id}`;
         document.querySelector('#booking-summary-title').textContent = work.title;
@@ -221,6 +221,42 @@ document.addEventListener('DOMContentLoaded', () => {
         const image = document.querySelector('#booking-image');
         image.src = work.image_url;
         image.hidden = false;
+        const calendarPanel = document.querySelector('#artisan-calendar-panel');
+        const calendarGrid = document.querySelector('#artisan-calendar-grid');
+        const dateInput = document.querySelector('#booking-date');
+        const timeInput = document.querySelector('#booking-time');
+        const slotMessage = document.querySelector('#slot-availability-message');
+        const paintCalendar = (calendarData) => {
+          if (!calendarGrid) return;
+          const days = calendarData.days || {};
+          calendarGrid.innerHTML = Object.keys(days).sort().map((dateKey) => {
+            const day = days[dateKey];
+            const dayNum = dateKey.split('-')[2];
+            const classes = ['calendar-day', day.status === 'available' ? 'available' : (day.status === 'blocked' ? 'blocked' : 'partial')];
+            if (dateInput?.value === dateKey) classes.push('selected');
+            return `<button type="button" class="${classes.join(' ')}" data-cal-date="${dateKey}">${dayNum}</button>`;
+          }).join('');
+          calendarGrid.querySelectorAll('[data-cal-date]').forEach((button) => {
+            button.addEventListener('click', () => {
+              if (dateInput) dateInput.value = button.getAttribute('data-cal-date');
+              paintCalendar(calendarData);
+              checkSlot();
+            });
+          });
+        };
+        const checkSlot = async () => {
+          if (!dateInput?.value || !timeInput?.value || !slotMessage) return;
+          const result = await apiGet(`/api/v1/customers/artisans/${encodeURIComponent(artisan.id)}/slot-check?date=${encodeURIComponent(dateInput.value)}&time=${encodeURIComponent(timeInput.value)}`);
+          slotMessage.textContent = result.available ? 'This slot is available.' : 'This slot is unavailable — choose another date or time (shown in red on the calendar).';
+          slotMessage.style.color = result.available ? '#0f7a50' : '#991b1b';
+        };
+        const now = new Date();
+        apiGet(`/api/v1/customers/artisans/${encodeURIComponent(artisan.id)}/calendar?year=${now.getFullYear()}&month=${now.getMonth() + 1}`).then((calendarData) => {
+          if (calendarPanel) calendarPanel.hidden = false;
+          paintCalendar(calendarData);
+        }).catch(() => {});
+        dateInput?.addEventListener('change', checkSlot);
+        timeInput?.addEventListener('change', checkSlot);
         apiGet('/api/v1/customers/me').then((profileData) => {
           const profile = profileData.profile || {};
           if (profile.address_line1) form.elements.address_line1.value = profile.address_line1;
@@ -388,39 +424,101 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelector('#hurray-dismiss')?.addEventListener('click', () => { hurray.hidden = true; }, { once: true });
     });
   }
+  const workCardPayload = (work) => ({
+    id: work.id,
+    title: work.title,
+    price: work.price,
+    image_url: work.image_url,
+    artisan_name: work.artisan_name,
+    artisan_id: work.artisan_id,
+    category: work.category,
+  });
+
   if (serviceGroups) {
-    let artisans = [];
-    const categoryNames = { MAKEUP: 'Makeup', MEHENDI: 'Mehendi', DRESS: 'Dress', FULL_PACKAGE: 'Full package' };
-    const renderArtisans = () => {
-      const query = document.querySelector('#service-search').value.trim().toLowerCase();
-      const category = document.querySelector('#category-filter').value;
-      const city = document.querySelector('#city-filter').value.toLowerCase();
-      const groups = new Map();
-      artisans.forEach((artisan) => {
-        if (city && artisan.city.toLowerCase() !== city) return;
-        const works = artisan.works.filter((work) => (!category || work.category === category) && `${work.title} ${work.caption} ${artisan.name} ${artisan.username} ${artisan.city}`.toLowerCase().includes(query));
-        if (category && !works.length) return;
-        const visibleWorks = category ? works : works;
-        const groupKeys = category ? [category] : [...new Set(visibleWorks.map((work) => work.category))];
-        if (!groupKeys.length && !query && !category) groupKeys.push(artisan.category || 'MAKEUP');
-        groupKeys.forEach((group) => groups.set(group, [...(groups.get(group) || []), { artisan, works: visibleWorks.filter((work) => work.category === group) }]));
-      });
-      serviceGroups.innerHTML = groups.size ? [...groups].map(([key, entries]) => `
-        <section class="service-group"><h2>${escapeHtml(categoryNames[key] || key)}</h2><div class="artisan-grid">${entries.map(({ artisan, works }) => `
-          <article class="artisan-card"><div class="artisan-heading"><div><h3>${escapeHtml(artisan.name)}</h3><p>@${escapeHtml(artisan.username)} · ${escapeHtml(artisan.city || 'India')}</p></div><span class="vendor-badge">Artisan</span></div><p class="artisan-id">Artisan ID: ${escapeHtml(artisan.id)}</p>${works.length ? `<div class="work-grid">${works.map((work) => `<article class="work-card"><img src="${escapeHtml(work.image_url)}" alt="${escapeHtml(work.title)} by ${escapeHtml(artisan.name)}"><div class="work-copy"><h4>${escapeHtml(work.title)}</h4><p>${escapeHtml(work.caption)}</p><div class="work-price">${currency(work.price)}</div><a class="btn btn-primary" href="/booking?work_id=${encodeURIComponent(work.id)}">Book this work</a></div></article>`).join('')}</div>` : '<p class="no-work">This artisan is setting up their portfolio.</p>'}</article>`).join('')}</div></section>`).join('') : '<p class="empty-state">No artisans or works match these filters yet.</p>';
+    let currentPage = 1;
+    const renderWorksPage = async () => {
+      const q = document.querySelector('#service-search')?.value.trim() || '';
+      const category = document.querySelector('#category-filter')?.value || '';
+      const city = document.querySelector('#city-filter')?.value || '';
+      const query = new URLSearchParams({ page: String(currentPage), per_page: '8' });
+      if (q) query.set('q', q);
+      if (category) query.set('category', category);
+      if (city) query.set('city', city);
+      serviceGroups.innerHTML = '<p class="empty-state" style="grid-column:1/-1">Loading services…</p>';
+      try {
+        const data = await apiGet(`/api/v1/customers/works?${query.toString()}`);
+        const works = data.works || [];
+        serviceGroups.innerHTML = works.length ? works.map((work) => `
+          <article class="product-card">
+            <img src="${escapeHtml(work.image_url)}" alt="${escapeHtml(work.title)}" loading="lazy" />
+            <div class="product-body">
+              <h3>${escapeHtml(work.title)}</h3>
+              <p class="product-meta">${escapeHtml(work.artisan_name)} · ${escapeHtml(work.artisan_city || 'India')}</p>
+              <div class="product-price">${currency(work.price)}</div>
+              <div class="product-actions">
+                <button type="button" class="btn btn-secondary" data-add-cart="${escapeHtml(work.id)}">Add to cart</button>
+                <a class="btn btn-primary" href="/booking?work_id=${encodeURIComponent(work.id)}">Buy now</a>
+              </div>
+            </div>
+          </article>`).join('') : '<p class="empty-state" style="grid-column:1/-1">No services match your filters yet.</p>';
+        const pagination = document.querySelector('#works-pagination');
+        if (pagination && data.pagination) {
+          const { page, total_pages } = data.pagination;
+          pagination.innerHTML = total_pages > 1 ? Array.from({ length: total_pages }, (_, index) => {
+            const pageNumber = index + 1;
+            return `<button type="button" class="btn ${pageNumber === page ? 'btn-primary' : 'btn-secondary'}" data-page="${pageNumber}">${pageNumber}</button>`;
+          }).join('') : '';
+          pagination.querySelectorAll('[data-page]').forEach((button) => {
+            button.addEventListener('click', () => {
+              currentPage = Number(button.getAttribute('data-page'));
+              renderWorksPage();
+            });
+          });
+        }
+        serviceGroups.querySelectorAll('[data-add-cart]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const work = works.find((entry) => entry.id === button.getAttribute('data-add-cart'));
+            if (work && typeof addToCart === 'function') {
+              addToCart(workCardPayload(work));
+              button.textContent = 'Added';
+            }
+          });
+        });
+      } catch (error) {
+        serviceGroups.innerHTML = `<p class="empty-state" style="grid-column:1/-1">${escapeHtml(error.message)}</p>`;
+      }
     };
-    apiGet('/api/v1/customers/artisans').then((data) => {
-      artisans = data.artisans;
-      const params = new URLSearchParams(window.location.search);
-      document.querySelector('#service-search').value = params.get('q') || '';
-      document.querySelector('#city-filter').value = params.get('city') || '';
-      document.querySelector('#category-filter').value = params.get('category') || '';
-      if (params.has('service_id')) document.querySelector('#category-filter').value = 'MAKEUP';
-      renderArtisans();
-    }).catch((error) => { serviceGroups.innerHTML = `<p class="empty-state">${escapeHtml(error.message)} <a href="/login">Sign in</a></p>`; });
-    document.querySelector('#service-search').addEventListener('input', renderArtisans);
-    document.querySelector('#category-filter').addEventListener('change', renderArtisans);
-    document.querySelector('#city-filter').addEventListener('change', renderArtisans);
+    const params = new URLSearchParams(window.location.search);
+    if (document.querySelector('#service-search')) document.querySelector('#service-search').value = params.get('q') || '';
+    if (document.querySelector('#city-filter')) document.querySelector('#city-filter').value = params.get('city') || '';
+    if (document.querySelector('#category-filter')) document.querySelector('#category-filter').value = params.get('category') || '';
+    renderWorksPage();
+    document.querySelector('#service-search')?.addEventListener('input', () => { currentPage = 1; renderWorksPage(); });
+    document.querySelector('#category-filter')?.addEventListener('change', () => { currentPage = 1; renderWorksPage(); });
+    document.querySelector('#city-filter')?.addEventListener('change', () => { currentPage = 1; renderWorksPage(); });
+  }
+
+  const cartItemsEl = document.querySelector('#cart-items');
+  if (cartItemsEl && typeof readCart === 'function') {
+    const renderCart = () => {
+      const items = readCart();
+      cartItemsEl.innerHTML = items.length ? items.map((work) => `
+        <article class="cart-row">
+          <img src="${escapeHtml(work.image_url)}" alt="${escapeHtml(work.title)}" />
+          <div><strong>${escapeHtml(work.title)}</strong><p>${escapeHtml(work.artisan_name)} · ${currency(work.price)}</p></div>
+          <div class="cart-actions">
+            <a class="btn btn-primary" href="/booking?work_id=${encodeURIComponent(work.id)}">Buy now</a>
+            <button type="button" class="btn btn-ghost" data-remove-cart="${escapeHtml(work.id)}">Remove</button>
+          </div>
+        </article>`).join('') : '<p class="empty-state">Your cart is empty.</p>';
+      cartItemsEl.querySelectorAll('[data-remove-cart]').forEach((button) => {
+        button.addEventListener('click', () => {
+          removeFromCart(button.getAttribute('data-remove-cart'));
+          renderCart();
+        });
+      });
+    };
+    renderCart();
   }
 
   const artisanRoot = document.querySelector('#artisan-dashboard');
@@ -430,7 +528,47 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelector('#artisan-orders').textContent = data.metrics.total_orders;
       document.querySelector('#artisan-earnings').textContent = currency(data.payments.available_balance);
       document.querySelector('#artisan-pending').textContent = currency(data.payments.pending_balance);
-      document.querySelector('#artisan-orders-list').innerHTML = data.orders.map((order) => `<div class="table-row"><div><strong>${escapeHtml(order.service)}</strong><small>${escapeHtml(order.customer)} · ${escapeHtml(order.date)} · ${escapeHtml(order.service_address || '')}</small></div><span class="status status-${escapeHtml(order.status.toLowerCase())}">${escapeHtml(order.status)}</span><strong>${currency(order.artisan_payout || order.amount)}</strong></div>`).join('') || '<p>No orders yet.</p>';
+      document.querySelector('#artisan-orders-list').innerHTML = data.orders.map((order) => `
+        <article class="notification-item" style="margin-bottom:12px">
+          <div class="table-row" style="border:none;padding:0">
+            <div>
+              <strong>${escapeHtml(order.service)}</strong>
+              <small>${escapeHtml(order.customer)} · ${escapeHtml(order.customer_phone || '')} · ${escapeHtml(order.customer_email || '')}</small>
+              <small>${escapeHtml(order.date)} ${escapeHtml(order.time || '')} · ${escapeHtml(order.service_address || '')}</small>
+              <small>Notes: ${escapeHtml(order.notes || '—')}</small>
+            </div>
+            <span class="status status-${escapeHtml((order.status || 'pending').toLowerCase())}">${escapeHtml(order.status)}</span>
+            <strong>${currency(order.artisan_payout || order.amount)}</strong>
+          </div>
+          ${order.can_respond ? `<div style="display:flex;gap:8px;margin-top:10px">
+            <button type="button" class="btn btn-primary" data-accept-order="${escapeHtml(order.id)}">Confirm order</button>
+            <button type="button" class="btn btn-secondary" data-reject-order="${escapeHtml(order.id)}">Reject & refund</button>
+          </div>` : ''}
+        </article>`).join('') || '<p>No orders yet.</p>';
+      document.querySelectorAll('[data-accept-order]').forEach((button) => {
+        button.addEventListener('click', async () => {
+          const orderId = button.getAttribute('data-accept-order');
+          const response = await fetch(`/api/v1/artisan/orders/${encodeURIComponent(orderId)}/accept`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${localStorage.getItem(tokenKey) || ''}` },
+          });
+          const payload = await response.json();
+          document.querySelector('#artisan-error').textContent = response.ok ? payload.message : (payload.error?.message || 'Unable to accept order.');
+          if (response.ok) window.location.reload();
+        });
+      });
+      document.querySelectorAll('[data-reject-order]').forEach((button) => {
+        button.addEventListener('click', async () => {
+          const orderId = button.getAttribute('data-reject-order');
+          const response = await fetch(`/api/v1/artisan/orders/${encodeURIComponent(orderId)}/reject`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${localStorage.getItem(tokenKey) || ''}` },
+          });
+          const payload = await response.json();
+          document.querySelector('#artisan-error').textContent = response.ok ? payload.message : (payload.error?.message || 'Unable to reject order.');
+          if (response.ok) window.location.reload();
+        });
+      });
       const notificationsEl = document.querySelector('#artisan-notifications');
       if (notificationsEl) {
         notificationsEl.innerHTML = (data.notifications || []).length
@@ -461,6 +599,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       renderPortfolio(data.portfolio);
     }).catch((error) => { document.querySelector('#artisan-error').textContent = error.message; });
+    document.querySelector('#calendar-block-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = new FormData(event.currentTarget);
+      const response = await fetch('/api/v1/artisan/calendar/blocks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem(tokenKey) || ''}` },
+        body: JSON.stringify(Object.fromEntries(form.entries())),
+      });
+      const payload = await response.json();
+      document.querySelector('#calendar-block-message').textContent = response.ok ? payload.message : (payload.error?.message || 'Unable to save.');
+      if (response.ok) event.currentTarget.reset();
+    });
     document.querySelector('#payout-form')?.addEventListener('submit', async (event) => {
       event.preventDefault();
       const form = new FormData(event.currentTarget);

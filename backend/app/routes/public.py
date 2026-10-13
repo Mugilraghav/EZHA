@@ -37,6 +37,11 @@ def customer_services():
     return send_from_directory(CUSTOMER_DIR, "services.html")
 
 
+@public_bp.get("/customer/cart")
+def customer_cart():
+    return send_from_directory(CUSTOMER_DIR, "cart.html")
+
+
 @public_bp.get("/explore")
 def explore():
     return redirect("/#vision")
