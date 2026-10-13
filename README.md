@@ -91,7 +91,7 @@ To use a hosted free PostgreSQL database, create a project with your provider, c
 
 For portfolio images, create a Supabase Storage bucket named `artisan-portfolio` and set it to public because artisan work is intended to be visible in customer listings. Configure `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET`, and `SUPABASE_SERVICE_ROLE_KEY` in the server environment. The service-role key is used only by Flask; never put it in frontend code or expose it to customers. Production uploads are rejected when storage settings are missing instead of silently saving to ephemeral local disk.
 
-To accept real payments, add Razorpay test keys as `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in `.env` first. Verify the full flow in Razorpay test mode before adding live keys. Without keys, checkout remains available but order creation reports that payments are not configured; it will not mark a booking as paid.
+Razorpay keys are optional for deployment. Add `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` later in the host's private environment settings when your Razorpay account is approved. Use test keys first. Without keys, checkout remains available but online payment is disabled and bookings are not marked paid.
 
 ## Launch checklist
 
@@ -115,7 +115,8 @@ Choose a host that runs Python WSGI applications and supports persistent Postgre
 - `JWT_SECRET` as a random secret at least 32 characters long
 - `DATABASE_URL` as your managed PostgreSQL connection URL
 - `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET=artisan-portfolio`, and `SUPABASE_SERVICE_ROLE_KEY` for persistent artisan photos
-- `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` using Razorpay test keys for initial verification
+
+Razorpay keys are not required to create the Render service. Add `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` later under Render **Environment** when your account is ready, then redeploy to enable checkout.
 
 Generate a JWT secret locally with `python -c "import secrets; print(secrets.token_hex(32))"`. Put the result directly into the host's private environment settings; do not commit `.env` or share the secret in chat. `.env` is ignored by Git.
 
@@ -133,7 +134,7 @@ gunicorn --bind "0.0.0.0:${PORT:-8000}" "backend.app:create_app()"
 
 ### Deploying with Render
 
-The repository includes `render.yaml` with `rootDir: .`, so Render installs from the repository root where `requirements.txt` lives. To use it, push the file to GitHub and create a Render Blueprint from that repository. Render will prompt for the database URL, Supabase URL/service key, and Razorpay keys as private environment values.
+The repository includes `render.yaml` with `rootDir: .`, so Render installs from the repository root where `requirements.txt` lives. To use it, push the file to GitHub and create a Render Blueprint from that repository. Render will prompt for the database URL and Supabase URL/service key as private environment values. Razorpay keys are optional and can be added after deployment.
 
 If you already created a Render Web Service and see `Could not open requirements file`, open **Settings → Build & Deploy** and clear **Root Directory** (or set it to `.`). Keep the build command as `python -m pip install -r requirements.txt`, then trigger a new deploy. Do not set Root Directory to `backend`; the dependency file is in the repository root.
 

@@ -572,6 +572,8 @@ def test_render_blueprint_uses_repository_root_requirements():
     assert (repository_root / "requirements.txt").is_file()
     assert "rootDir: ." in render_config
     assert "pip install -r requirements.txt" in render_config
+    assert "RAZORPAY_KEY_ID" not in render_config
+    assert "RAZORPAY_KEY_SECRET" not in render_config
 
 
 def test_postgres_database_url_without_host_has_actionable_error():

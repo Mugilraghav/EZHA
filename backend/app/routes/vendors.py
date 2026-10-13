@@ -219,7 +219,7 @@ def create_booking_payment_order(booking_id):
     try:
         payment = provider.create_payment(amount, currency="INR", receipt=booking_id)
     except PaymentConfigurationError:
-        return jsonify({"success": False, "error": {"code": "PAYMENT_NOT_CONFIGURED", "message": "Add Razorpay test keys to .env to enable checkout"}}), 503
+        return jsonify({"success": False, "error": {"code": "PAYMENT_NOT_CONFIGURED", "message": "Online payment is not enabled yet. Add Razorpay keys in the deployment environment settings to enable checkout."}}), 503
     except Exception:
         current_app.logger.exception("Razorpay order creation failed")
         return jsonify({"success": False, "error": {"code": "PAYMENT_PROVIDER_ERROR", "message": "Payment provider could not create an order"}}), 502
