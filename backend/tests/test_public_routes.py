@@ -46,6 +46,8 @@ def test_landing_page_primary_controls_have_working_destinations():
 
 def test_registered_artisan_and_categorized_work_appear_to_customers(tmp_path):
     from io import BytesIO
+    import hashlib
+    import hmac
 
     app = create_app()
     app.config["UPLOAD_FOLDER"] = str(tmp_path)
@@ -121,6 +123,53 @@ def test_registered_artisan_and_categorized_work_appear_to_customers(tmp_path):
     assert payment_order.status_code == 503
     assert payment_order.get_json()["error"]["code"] == "PAYMENT_NOT_CONFIGURED"
 
+    app.config["RAZORPAY_KEY_ID"] = "rzp_test_key_id"
+    app.config["RAZORPAY_KEY_SECRET"] = "unit-test-payment-secret"
+    order_id = "order_test_123"
+    with app.extensions["ezha_session_factory"].begin() as session:
+        from backend.app.models.user import Booking
+
+        persisted_booking = session.get(Booking, booking_id)
+        persisted_booking.payment_order_id = order_id
+        persisted_booking.payment_status = "PAYMENT_PENDING"
+
+    missing_fields = client.post(
+        f"/api/v1/bookings/{booking_id}/payment/verify",
+        headers={"Authorization": f"Bearer {customer_token}"},
+        json={"razorpay_order_id": order_id},
+    )
+    assert missing_fields.status_code == 400
+    assert missing_fields.get_json()["error"]["code"] == "MISSING_PAYMENT_FIELDS"
+
+    payment_id = "pay_test_456"
+    signing_payload = f"{order_id}|{payment_id}".encode("utf-8")
+    signature = hmac.new(
+        app.config["RAZORPAY_KEY_SECRET"].encode("utf-8"),
+        signing_payload,
+        hashlib.sha256,
+    ).hexdigest()
+    payment_payload = {
+        "razorpay_order_id": order_id,
+        "razorpay_payment_id": payment_id,
+        "razorpay_signature": signature,
+    }
+    invalid_signature = client.post(
+        f"/api/v1/bookings/{booking_id}/payment/verify",
+        headers={"Authorization": f"Bearer {customer_token}"},
+        json={**payment_payload, "razorpay_signature": "0" * 64},
+    )
+    assert invalid_signature.status_code == 400
+    with app.extensions["ezha_session_factory"]() as session:
+        assert session.get(Booking, booking_id).payment_status == "PAYMENT_PENDING"
+
+    verified_payment = client.post(
+        f"/api/v1/bookings/{booking_id}/payment/verify",
+        headers={"Authorization": f"Bearer {customer_token}"},
+        json=payment_payload,
+    )
+    assert verified_payment.status_code == 200
+    assert verified_payment.get_json()["data"]["payment_status"] == "PAID"
+
     artisan_dashboard = client.get(
         "/api/v1/artisan/dashboard",
         headers={"Authorization": f"Bearer {artisan_token}"},
@@ -186,6 +235,39 @@ def test_payment_provider_abstraction_is_defined():
 
     assert issubclass(RazorpayProvider, PaymentProvider)
     assert RazorpayProvider().provider_name == "razorpay"
+
+
+def test_razorpay_provider_creates_order_with_server_side_credentials(monkeypatch):
+    from backend.app.services.payments import RazorpayProvider
+
+    app = create_app()
+    app.config["RAZORPAY_KEY_ID"] = "rzp_test_example"
+    app.config["RAZORPAY_KEY_SECRET"] = "unit-test-secret"
+    request_data = {}
+
+    class FakeResponse:
+        status_code = 200
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"id": "order_test_001", "amount": 450000, "currency": "INR", "status": "created"}
+
+    def fake_post(url, **kwargs):
+        request_data["url"] = url
+        request_data.update(kwargs)
+        return FakeResponse()
+
+    monkeypatch.setattr("backend.app.services.payments.requests.post", fake_post)
+    with app.app_context():
+        result = RazorpayProvider().create_payment(4500, currency="INR", receipt="booking-001")
+
+    assert request_data["url"] == "https://api.razorpay.com/v1/orders"
+    assert request_data["auth"] == ("rzp_test_example", "unit-test-secret")
+    assert request_data["json"] == {"amount": 450000, "currency": "INR", "receipt": "booking-001"}
+    assert result["order_id"] == "order_test_001"
+    assert result["key_id"] == "rzp_test_example"
 
 
 def test_auth_and_rbac_routes_exist():

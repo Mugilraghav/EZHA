@@ -3,7 +3,13 @@ from flask import Blueprint, current_app, jsonify, request
 from backend.app.auth import auth_service
 from backend.app.models.catalog import get_demo_catalog
 from backend.app.models.user import ArtisanProfile, Booking, PortfolioWork, User
-from backend.app.services.payments import PaymentConfigurationError, RazorpayProvider
+from backend.app.services.payments import (
+    PaymentAuthenticationError,
+    PaymentConfigurationError,
+    PaymentProviderError,
+    PaymentSignatureError,
+    RazorpayProvider,
+)
 from backend.app.services.storage import portfolio_image_url
 from sqlalchemy import select
 
@@ -214,15 +220,23 @@ def create_booking_payment_order(booking_id):
         if booking.payment_status == "PAID":
             return jsonify({"success": False, "error": {"code": "ALREADY_PAID", "message": "This booking has already been paid"}}), 409
         amount = booking.amount
+        if amount * 100 < 100:
+            return jsonify({"success": False, "error": {"code": "AMOUNT_BELOW_MINIMUM", "message": "Payment amount must be at least 100 paise"}}), 400
 
     provider = RazorpayProvider()
     try:
         payment = provider.create_payment(amount, currency="INR", receipt=booking_id)
     except PaymentConfigurationError:
         return jsonify({"success": False, "error": {"code": "PAYMENT_NOT_CONFIGURED", "message": "Online payment is not enabled yet. Add Razorpay keys in the deployment environment settings to enable checkout."}}), 503
+    except PaymentAuthenticationError:
+        current_app.logger.error("Razorpay rejected the configured key pair")
+        return jsonify({"success": False, "error": {"code": "PAYMENT_CREDENTIALS_REJECTED", "message": "Razorpay rejected the configured keys. Check that the key ID and secret are a matching pair from the same mode."}}), 401
+    except PaymentProviderError:
+        current_app.logger.exception("Razorpay order creation failed")
+        return jsonify({"success": False, "error": {"code": "PAYMENT_PROVIDER_ERROR", "message": "Razorpay could not create the order. Check the server logs for the provider error."}}), 500
     except Exception:
         current_app.logger.exception("Razorpay order creation failed")
-        return jsonify({"success": False, "error": {"code": "PAYMENT_PROVIDER_ERROR", "message": "Payment provider could not create an order"}}), 502
+        return jsonify({"success": False, "error": {"code": "PAYMENT_PROVIDER_ERROR", "message": "Payment provider could not create an order"}}), 500
 
     with session_factory.begin() as session:
         booking = session.get(Booking, booking_id)
@@ -246,6 +260,8 @@ def verify_booking_payment(booking_id):
     order_id = payload.get("razorpay_order_id", "")
     payment_id = payload.get("razorpay_payment_id", "")
     signature = payload.get("razorpay_signature", "")
+    if not order_id or not payment_id or not signature:
+        return jsonify({"success": False, "error": {"code": "MISSING_PAYMENT_FIELDS", "message": "Razorpay order ID, payment ID, and signature are required"}}), 400
     session_factory = current_app.extensions["ezha_session_factory"]
     with session_factory() as session:
         booking = session.scalar(select(Booking).where(Booking.id == booking_id, Booking.customer_id == claims["sub"]))
@@ -260,6 +276,10 @@ def verify_booking_payment(booking_id):
             "razorpay_payment_id": payment_id,
             "razorpay_signature": signature,
         })
+    except PaymentConfigurationError:
+        return jsonify({"success": False, "error": {"code": "PAYMENT_NOT_CONFIGURED", "message": "Payment verification is not configured"}}), 503
+    except PaymentSignatureError:
+        return jsonify({"success": False, "error": {"code": "PAYMENT_VERIFICATION_FAILED", "message": "Razorpay signature did not match; booking remains unpaid"}}), 400
     except PaymentConfigurationError:
         return jsonify({"success": False, "error": {"code": "PAYMENT_NOT_CONFIGURED", "message": "Payment verification is not configured"}}), 503
     except Exception:
