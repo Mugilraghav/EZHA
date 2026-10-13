@@ -59,12 +59,19 @@ def admin_dashboard():
             "category": profile.category,
         } for artisan, profile in artisan_rows]
     orders = demo_orders + persisted_orders
+    platform_revenue = sum(
+        (booking.platform_fee if booking.platform_fee is not None else int(round(booking.amount * 0.15)))
+        for booking, _, _ in booking_rows
+        if booking.status == "CONFIRMED" and booking.payment_status == "PAID"
+    )
+    if not platform_revenue and demo_orders:
+        platform_revenue = sum(int(round(order["amount"] * 0.15)) for order in demo_orders if order["status"] == "CONFIRMED")
     data = {
         "kpis": {
             "customers": customers,
             "artisans": artisans,
             "orders": len(orders),
-            "revenue": sum(order["amount"] for order in orders if order["status"] == "CONFIRMED"),
+            "revenue": platform_revenue,
         },
         "recent_orders": orders[-10:][::-1],
         "vendors": current_app.config["EZHA_CATALOG"]["vendors"],

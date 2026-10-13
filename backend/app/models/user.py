@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -29,6 +29,34 @@ class ArtisanProfile(Base):
     artisan_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     city: Mapped[str] = mapped_column(String(100), default="", nullable=False)
     category: Mapped[str] = mapped_column(String(32), default="MAKEUP", nullable=False)
+    account_holder_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    account_number: Mapped[str] = mapped_column(String(32), default="", nullable=False)
+    ifsc_code: Mapped[str] = mapped_column(String(11), default="", nullable=False)
+
+
+class CustomerProfile(Base):
+    __tablename__ = "customer_profiles"
+
+    customer_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    phone: Mapped[str] = mapped_column(String(20), default="", nullable=False)
+    address_line1: Mapped[str] = mapped_column(String(200), default="", nullable=False)
+    address_line2: Mapped[str] = mapped_column(String(200), default="", nullable=False)
+    city: Mapped[str] = mapped_column(String(100), default="", nullable=False)
+    state: Mapped[str] = mapped_column(String(100), default="", nullable=False)
+    pincode: Mapped[str] = mapped_column(String(10), default="", nullable=False)
+
+
+class ArtisanNotification(Base):
+    __tablename__ = "artisan_notifications"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    artisan_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    booking_id: Mapped[str | None] = mapped_column(ForeignKey("bookings.id", ondelete="SET NULL"), nullable=True)
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    title: Mapped[str] = mapped_column(String(160), nullable=False)
+    message: Mapped[str] = mapped_column(String(500), nullable=False)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
 
 class PortfolioWork(Base):
@@ -55,7 +83,16 @@ class Booking(Base):
     service_date: Mapped[str] = mapped_column(String(10), nullable=False)
     service_time: Mapped[str] = mapped_column(String(5), nullable=False)
     notes: Mapped[str] = mapped_column(String(1000), default="", nullable=False)
+    service_mode: Mapped[str] = mapped_column(String(16), default="DOORSTEP", nullable=False)
+    service_address_line1: Mapped[str] = mapped_column(String(200), default="", nullable=False)
+    service_address_line2: Mapped[str] = mapped_column(String(200), default="", nullable=False)
+    service_city: Mapped[str] = mapped_column(String(100), default="", nullable=False)
+    service_state: Mapped[str] = mapped_column(String(100), default="", nullable=False)
+    service_pincode: Mapped[str] = mapped_column(String(10), default="", nullable=False)
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    platform_fee: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    artisan_payout: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    payout_status: Mapped[str] = mapped_column(String(24), default="UNPAID", nullable=False)
     status: Mapped[str] = mapped_column(String(24), default="PENDING", nullable=False)
     payment_status: Mapped[str] = mapped_column(String(24), default="UNPAID", nullable=False)
     payment_order_id: Mapped[str] = mapped_column(String(100), nullable=True)

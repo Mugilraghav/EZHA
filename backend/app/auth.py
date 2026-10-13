@@ -12,7 +12,8 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from backend.app.models.user import ArtisanProfile, User
+from backend.app.models.user import ArtisanProfile, CustomerProfile, User
+from backend.app.services.payouts import validate_bank_details
 
 
 class SimpleAuthService:
@@ -53,6 +54,15 @@ class SimpleAuthService:
         username: str = "",
         city: str = "",
         category: str = "MAKEUP",
+        account_holder_name: str = "",
+        account_number: str = "",
+        ifsc_code: str = "",
+        phone: str = "",
+        address_line1: str = "",
+        address_line2: str = "",
+        address_city: str = "",
+        address_state: str = "",
+        pincode: str = "",
     ) -> Dict[str, Any]:
         email_key = email.lower().strip()
         username_key = username.lower().strip() or email_key.split("@", 1)[0]
@@ -64,6 +74,8 @@ class SimpleAuthService:
         category = category.strip().upper() or "MAKEUP"
         if role == "ARTISAN" and category not in {"MAKEUP", "MEHENDI", "DRESS", "FULL_PACKAGE"}:
             raise ValueError("Choose makeup, mehendi, dress, or full package as your category")
+        if role == "ARTISAN":
+            validate_bank_details(account_holder_name, account_number, ifsc_code)
         if not email_key:
             raise ValueError("Email is required")
         session_factory = self._session_factory()
@@ -82,7 +94,28 @@ class SimpleAuthService:
                 session.add(user)
                 session.flush()
                 if role == "ARTISAN":
-                    session.add(ArtisanProfile(artisan_id=user.id, city=city.strip()[:100], category=category))
+                    session.add(
+                        ArtisanProfile(
+                            artisan_id=user.id,
+                            city=city.strip()[:100],
+                            category=category,
+                            account_holder_name=account_holder_name.strip()[:160],
+                            account_number=account_number.strip()[:32],
+                            ifsc_code=ifsc_code.strip().upper()[:11],
+                        )
+                    )
+                if role == "CUSTOMER" and any([phone, address_line1, address_city, pincode]):
+                    session.add(
+                        CustomerProfile(
+                            customer_id=user.id,
+                            phone=phone.strip()[:20],
+                            address_line1=address_line1.strip()[:200],
+                            address_line2=address_line2.strip()[:200],
+                            city=address_city.strip()[:100],
+                            state=address_state.strip()[:100],
+                            pincode=pincode.strip()[:10],
+                        )
+                    )
                 result = self._serialize_user(user)
         except IntegrityError as exc:
             raise ValueError("Username or email already exists") from exc

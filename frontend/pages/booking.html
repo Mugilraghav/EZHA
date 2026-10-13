@@ -12,7 +12,8 @@
     <link rel="stylesheet" href="/static/css/components.css" />
     <link rel="stylesheet" href="/static/css/responsive.css" />
     <style>
-      body { background: #fffaf8; }
+      body { background: transparent; }
+      .booking-card, .summary-card { background: var(--surface); }
       .booking-page { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 28px; padding: 64px 0 90px; }
       .booking-card, .summary-card { background: #fff; border: 1px solid var(--border); border-radius: 24px; padding: 24px; box-shadow: 0 12px 30px rgba(36,33,36,0.04); }
       .option-list { display: grid; gap: 14px; margin-top: 18px; }
@@ -54,10 +55,19 @@
         <h1 id="booking-title" style="margin-top: 18px; font-size: clamp(2.2rem, 4vw, 3.4rem);">Loading selected work</h1>
         <p id="booking-artisan"></p>
         <img id="booking-image" alt="Selected artisan work" style="width:100%;max-height:380px;object-fit:cover;border-radius:12px;margin-top:22px" hidden />
+        <p id="service-mode-note" style="margin-top:12px;color:var(--muted)"></p>
         <form id="booking-form" style="display:grid;gap:16px;margin-top:24px">
+          <fieldset style="border:1px solid var(--border);border-radius:16px;padding:16px;margin:0">
+            <legend style="padding:0 8px;font-weight:700">Doorstep service address</legend>
+            <label class="field">Street / house no.<input name="address_line1" required autocomplete="address-line1" /></label>
+            <label class="field">Area / landmark<input name="address_line2" autocomplete="address-line2" /></label>
+            <label class="field">City<input name="address_city" required autocomplete="address-level2" /></label>
+            <label class="field">State<input name="address_state" required autocomplete="address-level1" /></label>
+            <label class="field">PIN code<input name="pincode" required inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="postal-code" /></label>
+          </fieldset>
           <label class="field">Preferred date<input type="date" name="date" required /></label>
           <label class="field">Preferred time<input type="time" name="time" required /></label>
-          <label class="field">Notes for the artisan<textarea name="notes" maxlength="1000" rows="4" placeholder="Share any details that will help the artisan prepare."></textarea></label>
+          <label class="field">Notes for the artisan<textarea name="notes" maxlength="1000" rows="4" placeholder="Parking instructions, occasion details, or tailoring notes."></textarea></label>
           <p id="booking-message" role="status"></p>
           <button class="btn btn-primary" type="submit">Continue to checkout</button>
         </form>

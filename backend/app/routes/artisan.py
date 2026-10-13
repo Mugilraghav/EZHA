@@ -8,7 +8,9 @@ from sqlalchemy import select
 from werkzeug.utils import secure_filename
 
 from backend.app.auth import auth_service
-from backend.app.models.user import Booking, PortfolioWork, User
+from backend.app.models.user import ArtisanNotification, ArtisanProfile, Booking, PortfolioWork, User
+from backend.app.services.commission import platform_commission_rate
+from backend.app.services.payouts import mask_account_number, validate_bank_details
 from backend.app.services.storage import StorageUploadError, SupabaseStorage, portfolio_image_url
 
 bp = Blueprint("artisan", __name__, url_prefix="/api/v1/artisan")
@@ -65,6 +67,13 @@ def dashboard():
             .where(Booking.artisan_id == claims["sub"])
             .order_by(Booking.created_at.desc())
         ).all()
+        profile = session.get(ArtisanProfile, claims["sub"])
+        notifications = session.scalars(
+            select(ArtisanNotification)
+            .where(ArtisanNotification.artisan_id == claims["sub"])
+            .order_by(ArtisanNotification.created_at.desc())
+            .limit(20)
+        ).all()
         bookings = [{
             "id": booking.id,
             "customer": customer.name,
@@ -72,25 +81,113 @@ def dashboard():
             "date": booking.service_date,
             "status": booking.status,
             "amount": booking.amount,
+            "artisan_payout": booking.artisan_payout or booking.amount,
             "payment_status": booking.payment_status,
+            "service_mode": booking.service_mode,
+            "service_address": f"{booking.service_address_line1}, {booking.service_city} {booking.service_pincode}",
         } for booking, work, customer in booking_rows]
     demo_orders = ([
         {"id": "ord_2001", "customer": "Meera S.", "service": "Bridal Makeup Trial", "date": "2026-11-15", "status": "CONFIRMED", "amount": 8500},
         {"id": "ord_2002", "customer": "Rhea K.", "service": "Bridal Makeup Trial", "date": "2026-11-18", "status": "PENDING", "amount": 8500},
     ] if claims.get("username") == "ananya" and current_app.config.get("APP_ENV", "development") != "production" else [])
     orders = demo_orders + bookings
-    total_earnings = sum(order["amount"] for order in orders if order["status"] == "CONFIRMED")
+    total_earnings = sum(
+        (order.get("artisan_payout") or order["amount"])
+        for order in orders
+        if order["status"] == "CONFIRMED" and order.get("payment_status") == "PAID"
+    )
     portfolio = _portfolio_items(claims["sub"])
+    payout_ready = bool(profile and profile.account_number and profile.ifsc_code)
     return jsonify({
         "success": True,
         "data": {
             "profile": {"name": claims["name"], "username": claims["username"]},
             "orders": orders,
-            "payments": {"available_balance": total_earnings, "pending_balance": sum(order["amount"] for order in orders if order["status"] == "PENDING"), "currency": "INR"},
+            "payments": {
+                "available_balance": total_earnings,
+                "pending_balance": sum(order["amount"] for order in orders if order["status"] == "PENDING"),
+                "currency": "INR",
+                "commission_rate": platform_commission_rate(),
+                "payout_account": {
+                    "account_holder_name": profile.account_holder_name if profile else "",
+                    "account_number_masked": mask_account_number(profile.account_number) if profile and profile.account_number else "",
+                    "ifsc_code": profile.ifsc_code if profile else "",
+                    "configured": payout_ready,
+                },
+            },
+            "notifications": [{
+                "id": note.id,
+                "kind": note.kind,
+                "title": note.title,
+                "message": note.message,
+                "booking_id": note.booking_id,
+                "is_read": note.is_read,
+                "created_at": note.created_at.isoformat(),
+            } for note in notifications],
             "portfolio": portfolio,
             "metrics": {"total_orders": len(orders), "completed_orders": sum(order["status"] == "CONFIRMED" for order in orders)},
         },
     }), 200
+
+
+@bp.get("/payout-profile")
+def payout_profile():
+    claims, error = _artisan_claims()
+    if error:
+        return error
+    with current_app.extensions["ezha_session_factory"]() as session:
+        profile = session.get(ArtisanProfile, claims["sub"])
+    return jsonify({
+        "success": True,
+        "data": {
+            "account_holder_name": profile.account_holder_name if profile else "",
+            "account_number_masked": mask_account_number(profile.account_number) if profile and profile.account_number else "",
+            "ifsc_code": profile.ifsc_code if profile else "",
+            "configured": bool(profile and profile.account_number and profile.ifsc_code),
+        },
+    }), 200
+
+
+@bp.patch("/payout-profile")
+def update_payout_profile():
+    claims, error = _artisan_claims()
+    if error:
+        return error
+    payload = request.get_json(silent=True) or {}
+    try:
+        validate_bank_details(
+            payload.get("account_holder_name", ""),
+            payload.get("account_number", ""),
+            payload.get("ifsc_code", ""),
+        )
+    except ValueError as exc:
+        return jsonify({"success": False, "error": {"code": "INVALID_BANK_DETAILS", "message": str(exc)}}), 400
+    with current_app.extensions["ezha_session_factory"].begin() as session:
+        profile = session.get(ArtisanProfile, claims["sub"])
+        if profile is None:
+            return jsonify({"success": False, "error": {"code": "NOT_FOUND", "message": "Artisan profile not found"}}), 404
+        profile.account_holder_name = str(payload.get("account_holder_name", "")).strip()[:160]
+        profile.account_number = str(payload.get("account_number", "")).strip()[:32]
+        profile.ifsc_code = str(payload.get("ifsc_code", "")).strip().upper()[:11]
+    return jsonify({"success": True, "message": "Payout bank details saved. EZHA will transfer your 85% share after each paid booking."}), 200
+
+
+@bp.post("/notifications/<notification_id>/read")
+def mark_notification_read(notification_id):
+    claims, error = _artisan_claims()
+    if error:
+        return error
+    with current_app.extensions["ezha_session_factory"].begin() as session:
+        note = session.scalar(
+            select(ArtisanNotification).where(
+                ArtisanNotification.id == notification_id,
+                ArtisanNotification.artisan_id == claims["sub"],
+            )
+        )
+        if not note:
+            return jsonify({"success": False, "error": {"code": "NOT_FOUND", "message": "Notification not found"}}), 404
+        note.is_read = True
+    return jsonify({"success": True}), 200
 
 
 @bp.get("/portfolio")

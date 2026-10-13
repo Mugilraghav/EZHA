@@ -47,11 +47,33 @@ def initialize_database(app: Flask) -> None:
     session_factory = sessionmaker(bind=engine, expire_on_commit=False)
     Base.metadata.create_all(engine)
     booking_columns = {column["name"] for column in inspect(engine).get_columns("bookings")}
+    booking_alters = {
+        "payment_order_id": "ALTER TABLE bookings ADD COLUMN payment_order_id VARCHAR(100)",
+        "payment_id": "ALTER TABLE bookings ADD COLUMN payment_id VARCHAR(100)",
+        "service_mode": "ALTER TABLE bookings ADD COLUMN service_mode VARCHAR(16) NOT NULL DEFAULT 'DOORSTEP'",
+        "service_address_line1": "ALTER TABLE bookings ADD COLUMN service_address_line1 VARCHAR(200) NOT NULL DEFAULT ''",
+        "service_address_line2": "ALTER TABLE bookings ADD COLUMN service_address_line2 VARCHAR(200) NOT NULL DEFAULT ''",
+        "service_city": "ALTER TABLE bookings ADD COLUMN service_city VARCHAR(100) NOT NULL DEFAULT ''",
+        "service_state": "ALTER TABLE bookings ADD COLUMN service_state VARCHAR(100) NOT NULL DEFAULT ''",
+        "service_pincode": "ALTER TABLE bookings ADD COLUMN service_pincode VARCHAR(10) NOT NULL DEFAULT ''",
+        "platform_fee": "ALTER TABLE bookings ADD COLUMN platform_fee INTEGER",
+        "artisan_payout": "ALTER TABLE bookings ADD COLUMN artisan_payout INTEGER",
+        "payout_status": "ALTER TABLE bookings ADD COLUMN payout_status VARCHAR(24) NOT NULL DEFAULT 'UNPAID'",
+    }
     with engine.begin() as connection:
-        if "payment_order_id" not in booking_columns:
-            connection.execute(text("ALTER TABLE bookings ADD COLUMN payment_order_id VARCHAR(100)"))
-        if "payment_id" not in booking_columns:
-            connection.execute(text("ALTER TABLE bookings ADD COLUMN payment_id VARCHAR(100)"))
+        for column_name, statement in booking_alters.items():
+            if column_name not in booking_columns:
+                connection.execute(text(statement))
+    artisan_columns = {column["name"] for column in inspect(engine).get_columns("artisan_profiles")}
+    artisan_alters = {
+        "account_holder_name": "ALTER TABLE artisan_profiles ADD COLUMN account_holder_name VARCHAR(160) NOT NULL DEFAULT ''",
+        "account_number": "ALTER TABLE artisan_profiles ADD COLUMN account_number VARCHAR(32) NOT NULL DEFAULT ''",
+        "ifsc_code": "ALTER TABLE artisan_profiles ADD COLUMN ifsc_code VARCHAR(11) NOT NULL DEFAULT ''",
+    }
+    with engine.begin() as connection:
+        for column_name, statement in artisan_alters.items():
+            if column_name not in artisan_columns:
+                connection.execute(text(statement))
     portfolio_columns = {column["name"] for column in inspect(engine).get_columns("portfolio_works")}
     if "storage_provider" not in portfolio_columns:
         with engine.begin() as connection:
@@ -76,4 +98,17 @@ def initialize_database(app: Flask) -> None:
                 if demo_user["role"] == "ARTISAN":
                     profile = session.get(ArtisanProfile, existing.id)
                     if profile is None:
-                        session.add(ArtisanProfile(artisan_id=existing.id, city="Bengaluru", category="MAKEUP"))
+                        session.add(
+                            ArtisanProfile(
+                                artisan_id=existing.id,
+                                city="Bengaluru",
+                                category="MAKEUP",
+                                account_holder_name="Ananya Demo",
+                                account_number="123456789012",
+                                ifsc_code="HDFC0001234",
+                            )
+                        )
+                    elif not profile.account_number:
+                        profile.account_holder_name = "Ananya Demo"
+                        profile.account_number = "123456789012"
+                        profile.ifsc_code = "HDFC0001234"
