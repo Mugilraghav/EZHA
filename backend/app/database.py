@@ -21,12 +21,24 @@ DEMO_USERS = (
 
 def initialize_database(app: Flask) -> None:
     database_url = app.config["DATABASE_URL"]
+    if not isinstance(database_url, str) or not database_url.strip():
+        raise RuntimeError("DATABASE_URL is empty. Set it to a PostgreSQL connection string in Render.")
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
 
     url = make_url(database_url)
+    backend = url.get_backend_name()
+    if backend in {"postgres", "postgresql"} and not url.host:
+        raise RuntimeError(
+            "DATABASE_URL must include a PostgreSQL host. In Render, use the Supabase Database connection string, not SUPABASE_URL."
+        )
+    if backend not in {"sqlite", "postgres", "postgresql"}:
+        raise RuntimeError(
+            "DATABASE_URL must be a sqlite:///... URL locally or a postgresql://... Supabase connection string."
+        )
+
     connect_args = {}
-    if url.get_backend_name() == "sqlite":
+    if backend == "sqlite":
         connect_args["check_same_thread"] = False
         if url.database not in (None, "", ":memory:"):
             Path(url.database).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)

@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from backend.app import create_app as app_factory
 
 
@@ -570,3 +572,11 @@ def test_render_blueprint_uses_repository_root_requirements():
     assert (repository_root / "requirements.txt").is_file()
     assert "rootDir: ." in render_config
     assert "pip install -r requirements.txt" in render_config
+
+
+def test_postgres_database_url_without_host_has_actionable_error():
+    class MissingDatabaseHostConfig(TestConfig):
+        DATABASE_URL = "postgresql://postgres:example@/postgres"
+
+    with pytest.raises(RuntimeError, match="DATABASE_URL must include a PostgreSQL host"):
+        app_factory(MissingDatabaseHostConfig)
