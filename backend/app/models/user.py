@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Optional
 from uuid import uuid4
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
@@ -51,7 +52,7 @@ class ArtisanNotification(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     artisan_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
-    booking_id: Mapped[str | None] = mapped_column(ForeignKey("bookings.id", ondelete="SET NULL"), nullable=True)
+    booking_id: Mapped[Optional[str]] = mapped_column(ForeignKey("bookings.id", ondelete="SET NULL"), nullable=True)
     kind: Mapped[str] = mapped_column(String(32), nullable=False)
     title: Mapped[str] = mapped_column(String(160), nullable=False)
     message: Mapped[str] = mapped_column(String(500), nullable=False)
@@ -90,11 +91,11 @@ class Booking(Base):
     service_state: Mapped[str] = mapped_column(String(100), default="", nullable=False)
     service_pincode: Mapped[str] = mapped_column(String(10), default="", nullable=False)
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
-    platform_fee: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    artisan_payout: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    platform_fee: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    artisan_payout: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     payout_status: Mapped[str] = mapped_column(String(24), default="UNPAID", nullable=False)
     status: Mapped[str] = mapped_column(String(24), default="PENDING", nullable=False)
     payment_status: Mapped[str] = mapped_column(String(24), default="UNPAID", nullable=False)
-    payment_order_id: Mapped[str] = mapped_column(String(100), nullable=True)
-    payment_id: Mapped[str] = mapped_column(String(100), nullable=True)
+    payment_order_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    payment_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
