@@ -1,0 +1,299 @@
+/* EZHA Royal Palace — motion, surfaces, forms, loading */
+
+.section-alt {
+  background: rgba(4, 31, 27, 0.42);
+  border-block: 1px solid rgba(212, 175, 55, 0.08);
+}
+
+.site-header {
+  transition: background var(--transition-luxury), box-shadow var(--transition-luxury), border-color var(--transition-luxury);
+}
+
+.site-header.is-scrolled {
+  background: rgba(3, 42, 36, 0.92);
+  box-shadow: var(--shadow-soft);
+  border-bottom-color: rgba(212, 175, 55, 0.28);
+}
+
+.royal-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 32px 0;
+  color: rgba(212, 175, 55, 0.45);
+  font-size: 0.65rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+}
+
+.royal-divider::before,
+.royal-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.35), transparent);
+}
+
+.palace-card,
+.category-card,
+.vendor-card,
+.step-card,
+.trust-card,
+.stat-box,
+.image-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+}
+
+.palace-card:hover,
+.category-card:hover,
+.vendor-card:hover {
+  border-color: rgba(212, 175, 55, 0.38);
+  box-shadow: var(--shadow-royal), var(--glow-gold);
+}
+
+/* Forms — global */
+.field input,
+.field select,
+.field textarea,
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea,
+.auth-form input,
+.auth-form select,
+.work-form input,
+.service-tools input,
+.service-tools select,
+.payout-form input {
+  background: rgba(4, 31, 27, 0.55);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 12px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.field input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus,
+.auth-form input:focus,
+.work-form input:focus,
+.service-tools input:focus,
+.payout-form input:focus {
+  border-color: var(--color-gold-400);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.18);
+  outline: none;
+}
+
+/* Page shells (dashboards, booking, checkout) */
+.booking-card,
+.summary-card,
+.checkout-card,
+.pay-card,
+.stat-card,
+.panel,
+.artisan-card {
+  background: var(--surface-elevated) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text);
+  box-shadow: var(--shadow-soft);
+}
+
+.booking-page h1,
+.checkout-page h1,
+.customer-main h1,
+.dash-shell h1,
+.booking-card h2,
+.summary-card h2 {
+  color: var(--text);
+}
+
+.customer-main p,
+.dash-shell p {
+  color: var(--text-secondary);
+}
+
+/* Auth */
+.auth-main {
+  background: transparent !important;
+}
+
+.auth-form-wrap h2 {
+  color: var(--text);
+}
+
+.auth-visual {
+  background:
+    linear-gradient(180deg, rgba(3, 42, 36, 0.35), rgba(3, 42, 36, 0.88)),
+    url("https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1500&q=85") center/cover !important;
+}
+
+.auth-form input,
+.auth-form select {
+  background: rgba(4, 31, 27, 0.65);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.artisan-fields {
+  background: rgba(4, 31, 27, 0.35) !important;
+  border-color: var(--border) !important;
+}
+
+/* Reveal animations */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-stagger > * {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.55s ease-out, transform 0.55s ease-out;
+}
+
+.reveal-stagger.is-visible > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-stagger.is-visible > *:nth-child(1) { transition-delay: 0.05s; }
+.reveal-stagger.is-visible > *:nth-child(2) { transition-delay: 0.12s; }
+.reveal-stagger.is-visible > *:nth-child(3) { transition-delay: 0.19s; }
+.reveal-stagger.is-visible > *:nth-child(4) { transition-delay: 0.26s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-stagger > * {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Page transition */
+body.ezha-page-exit {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.35s ease-out, transform 0.35s ease-out;
+}
+
+body.ezha-page-enter {
+  animation: ezhaPageEnter 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes ezhaPageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.ezha-page-enter {
+    animation: none;
+  }
+  body.ezha-page-exit {
+    transition: none;
+  }
+}
+
+/* Loading overlay */
+#ezha-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(165deg, var(--color-emerald-850), var(--color-emerald-950));
+  transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+}
+
+#ezha-loader.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.ezha-loader-emblem {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  display: grid;
+  place-items: center;
+}
+
+.ezha-loader-emblem img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px rgba(201, 162, 39, 0.35));
+}
+
+.ezha-loader-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  border-top-color: rgba(212, 175, 55, 0.85);
+  border-right-color: rgba(212, 175, 55, 0.25);
+  animation: ezhaLoaderSpin 1.2s linear infinite;
+}
+
+@keyframes ezhaLoaderSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ezha-loader-ring {
+    animation: none;
+    border-color: rgba(212, 175, 55, 0.45);
+  }
+}
+
+/* Hero particles */
+.hero-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.35;
+}
+
+.hero-particles span {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(225, 196, 90, 0.55);
+  animation: ezhaFloat 8s ease-in-out infinite;
+}
+
+.hero-particles span:nth-child(1) { left: 12%; top: 22%; animation-delay: 0s; }
+.hero-particles span:nth-child(2) { left: 78%; top: 18%; animation-delay: 1.2s; }
+.hero-particles span:nth-child(3) { left: 64%; top: 72%; animation-delay: 2.4s; }
+.hero-particles span:nth-child(4) { left: 28%; top: 68%; animation-delay: 3.1s; }
+
+@keyframes ezhaFloat {
+  0%, 100% { transform: translateY(0); opacity: 0.35; }
+  50% { transform: translateY(-12px); opacity: 0.75; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-particles { display: none; }
+}
