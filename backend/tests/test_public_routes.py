@@ -12,6 +12,7 @@ class TestConfig:
     DATABASE_URL = "sqlite:///:memory:"
     RAZORPAY_KEY_ID = ""
     RAZORPAY_KEY_SECRET = ""
+    PORTFOLIO_LISTING_BUFFER_MINUTES = 0
 
 
 DOORSTEP_ADDRESS = {
@@ -41,7 +42,7 @@ def test_homepage_renders_ezha_branding():
 
     assert response.status_code == 200
     assert b"EZHA" in response.data
-    assert b"Your Style. Your Artist. Your Signature." in response.data
+    assert b"Premium service at your doorstep." in response.data
     assert b'/static/assets/ezha-logo.png' in response.data
     logo = client.get('/static/assets/ezha-logo.png')
     assert logo.status_code == 200
@@ -52,11 +53,27 @@ def test_landing_page_primary_controls_have_working_destinations():
     response = create_app().test_client().get("/")
 
     assert response.status_code == 200
-    assert b'id="landing-search-form"' in response.data
-    assert b'data-focus-search' in response.data
+    assert b'href="#vision"' in response.data
+    assert b'Services' in response.data
     assert b'href="/login"' in response.data
     assert b'href="/register"' in response.data
-    assert b'href="/customer/services?service_id=svc_001"' in response.data
+    assert b'vimala8121983@gmail.com' in response.data
+
+
+def test_public_stats_endpoint_returns_counts():
+    client = create_app().test_client()
+    response = client.get("/api/v1/public/stats")
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["success"] is True
+    assert "bookings_completed" in payload["data"]
+    assert "verified_artists" in payload["data"]
+
+
+def test_explore_route_redirects_to_vision():
+    response = create_app().test_client().get("/explore")
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/#vision")
 
 
 def test_registered_artisan_and_categorized_work_appear_to_customers(tmp_path):
@@ -78,7 +95,7 @@ def test_registered_artisan_and_categorized_work_appear_to_customers(tmp_path):
             "role": "ARTISAN",
             "city": "Chennai",
             "category": "MEHENDI",
-            **ARTISAN_BANK,
+            "phone": "9876543210",
         },
     )
     assert registration.status_code == 201
@@ -89,6 +106,12 @@ def test_registered_artisan_and_categorized_work_appear_to_customers(tmp_path):
         json={"username": "artist_meera", "password": "artist-password", "role": "ARTISAN"},
     )
     artisan_token = artisan_login.get_json()["data"]["access_token"]
+    payout = client.patch(
+        "/api/v1/artisan/payout-profile",
+        headers={"Authorization": f"Bearer {artisan_token}"},
+        json=ARTISAN_BANK,
+    )
+    assert payout.status_code == 200
     upload = client.post(
         "/api/v1/artisan/portfolio",
         headers={"Authorization": f"Bearer {artisan_token}"},
@@ -207,8 +230,11 @@ def test_marketplace_pages_are_available():
     app = create_app()
     client = app.test_client()
 
+    explore = client.get("/explore")
+    assert explore.status_code == 302
+    assert explore.headers["Location"].endswith("/#vision")
+
     for route, expected in [
-        ("/explore", b"Explore"),
         ("/category", b"Category"),
         ("/vendor", b"Vendor"),
     ]:
@@ -292,7 +318,7 @@ def test_auth_and_rbac_routes_exist():
 
     register_response = client.post(
         "/api/v1/auth/register",
-        json={"email": "newuser@example.com", "password": "securepass", "name": "New User"},
+        json={"email": "newuser@example.com", "password": "securepass", "name": "New User", "phone": "9000012345"},
     )
     assert register_response.status_code in (200, 201)
 
@@ -447,7 +473,9 @@ def test_role_registration_and_login_are_role_specific():
             "password": "studio-pass-123",
             "name": "Mira Artist",
             "role": "ARTISAN",
-            **ARTISAN_BANK,
+            "city": "Mumbai",
+            "category": "MAKEUP",
+            "phone": "9123456789",
         },
     )
     assert registration.status_code == 201
@@ -626,6 +654,7 @@ def test_registered_customer_persists_with_hashed_password(tmp_path):
             "password": "customer-password",
             "name": "Persistent Customer",
             "role": "CUSTOMER",
+            "phone": "9988776655",
         },
     )
     assert response.status_code == 201

@@ -21,5 +21,11 @@ class Config:
     RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
     RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
     PLATFORM_COMMISSION_RATE = float(os.getenv("PLATFORM_COMMISSION_RATE", "0.15"))
+    LANDING_HERO_PATH = os.getenv("LANDING_HERO_PATH", "")
+    FOUNDER_IMAGE_PATH = os.getenv("FOUNDER_IMAGE_PATH", "")
+    FOUNDER_NAME = os.getenv("FOUNDER_NAME", "Mugilraghav")
+    SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL", "vimala8121983@gmail.com")
+    PORTFOLIO_LISTING_BUFFER_MINUTES = int(os.getenv("PORTFOLIO_LISTING_BUFFER_MINUTES", "15"))
+    ORDER_ACCEPTANCE_HOURS = int(os.getenv("ORDER_ACCEPTANCE_HOURS", "3"))
     DEBUG = APP_ENV == "development"
     TESTING = os.getenv("APP_ENV") == "testing"

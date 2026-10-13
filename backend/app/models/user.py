@@ -18,9 +18,24 @@ class User(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     username: Mapped[str] = mapped_column(String(80), unique=True, index=True, nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    phone: Mapped[str] = mapped_column(String(20), default="", index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(160), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[str] = mapped_column(String(24), index=True, nullable=False)
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    phone_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+
+class OtpChallenge(Base):
+    __tablename__ = "otp_challenges"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    channel: Mapped[str] = mapped_column(String(16), nullable=False)
+    destination: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
+    code_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    purpose: Mapped[str] = mapped_column(String(24), default="verify", nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
 
@@ -45,6 +60,31 @@ class CustomerProfile(Base):
     city: Mapped[str] = mapped_column(String(100), default="", nullable=False)
     state: Mapped[str] = mapped_column(String(100), default="", nullable=False)
     pincode: Mapped[str] = mapped_column(String(10), default="", nullable=False)
+
+
+class CustomerNotification(Base):
+    __tablename__ = "customer_notifications"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    customer_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    booking_id: Mapped[Optional[str]] = mapped_column(ForeignKey("bookings.id", ondelete="SET NULL"), nullable=True)
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    title: Mapped[str] = mapped_column(String(160), nullable=False)
+    message: Mapped[str] = mapped_column(String(1000), nullable=False)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+
+class ArtisanCalendarBlock(Base):
+    __tablename__ = "artisan_calendar_blocks"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    artisan_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    block_date: Mapped[str] = mapped_column(String(10), index=True, nullable=False)
+    start_time: Mapped[str] = mapped_column(String(5), default="", nullable=False)
+    end_time: Mapped[str] = mapped_column(String(5), default="", nullable=False)
+    reason: Mapped[str] = mapped_column(String(200), default="", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
 
 class ArtisanNotification(Base):
@@ -98,4 +138,6 @@ class Booking(Base):
     payment_status: Mapped[str] = mapped_column(String(24), default="UNPAID", nullable=False)
     payment_order_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     payment_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    acceptance_deadline: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    artisan_decision: Mapped[str] = mapped_column(String(24), default="PENDING", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)

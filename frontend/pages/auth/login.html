@@ -29,6 +29,8 @@
       .auth-switch { margin-top: 22px; font-size: .92rem; }
       .auth-switch a { color: var(--primary); font-weight: 700; }
       .auth-demo { margin-top: 28px; border-top: 1px solid var(--border); padding-top: 18px; color: var(--muted); font-size: .82rem; }
+      .forgot-panel { display: none; gap: 14px; margin-top: 8px; padding: 16px; border: 1px dashed var(--border); border-radius: 12px; }
+      .forgot-panel[data-open="true"] { display: grid; }
       @media (max-width: 760px) { .auth-layout { grid-template-columns: 1fr; } .auth-visual { min-height: 260px; padding: 24px; } .auth-visual h1 { font-size: 2.25rem; } .auth-visual p { display: none; } .auth-main { min-height: calc(100vh - 260px); padding: 32px 22px 46px; } }
     </style>
   </head>
@@ -36,26 +38,28 @@
     <main class="auth-layout">
       <section class="auth-visual">
         <a class="brand" href="/" aria-label="EZHA home"><img class="brand-logo" src="/static/assets/ezha-logo.png" alt="EZHA | The Signature of Success" /></a>
-        <div><span class="eyebrow" style="color:white;background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.2)">A marketplace for craft</span><h1>Make room for the work you love.</h1><p>One place for customers to discover exceptional services and for artisans to build a business around their craft.</p></div>
+        <div><span class="eyebrow" style="color:white;background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.2)">A marketplace for craft</span><h1>Make room for the work you love.</h1><p>Sign in with your email or mobile number and password.</p></div>
       </section>
       <section class="auth-main">
         <div class="auth-form-wrap">
           <span class="eyebrow">Welcome back</span>
           <h2>Sign in to EZHA</h2>
-          <p class="auth-intro">Choose your account type to open the right workspace.</p>
+          <p class="auth-intro">Choose your account type. Use the email or mobile you registered with.</p>
           <form class="auth-form" id="login-form">
             <label>Sign in as<select name="role" id="login-role" required><option value="CUSTOMER">Customer</option><option value="ARTISAN">Artisan</option><option value="ADMIN">Admin</option></select></label>
-            <label>Username or email<input name="username" id="login-username" autocomplete="username" required /></label>
+            <label>Email or mobile<input name="username" id="login-username" autocomplete="username" required placeholder="you@email.com or 9876543210" /></label>
             <label>Password<input name="password" type="password" autocomplete="current-password" required /></label>
-            <div class="artisan-fields" id="artisan-payout-login" hidden>
-              <p style="font-size:.88rem;color:var(--muted)">Artisans: add or update the bank account for your 85% payout share.</p>
-              <label>Account holder name<input name="account_holder_name" autocomplete="name" /></label>
-              <label>Bank account number<input name="account_number" inputmode="numeric" pattern="[0-9]{9,18}" /></label>
-              <label>IFSC code<input name="ifsc_code" maxlength="11" placeholder="HDFC0001234" /></label>
-            </div>
             <div class="auth-message" id="auth-message" role="status" aria-live="polite"></div>
             <button class="btn btn-primary" type="submit">Sign in</button>
           </form>
+          <p class="auth-switch"><button type="button" class="btn btn-ghost" id="toggle-forgot" style="width:auto;padding:0;font-weight:700;color:var(--primary)">Forgot password?</button></p>
+          <div class="forgot-panel" id="forgot-panel">
+            <label>Email or mobile<input id="forgot-identifier" autocomplete="username" /></label>
+            <button type="button" class="btn btn-secondary" id="forgot-send">Send reset code</button>
+            <label>Reset code<input id="forgot-otp" inputmode="numeric" maxlength="6" /></label>
+            <label>New password<input id="forgot-password" type="password" autocomplete="new-password" minlength="8" /></label>
+            <button type="button" class="btn btn-primary" id="forgot-submit">Update password</button>
+          </div>
           <p class="auth-switch">New to EZHA? <a href="/register">Create an account</a></p>
           <div class="auth-demo">Demo accounts: customer / demo123 · artisan `ananya` / demo123 · admin / demo123</div>
         </div>

@@ -12,7 +12,11 @@ from backend.app.services.payments import (
 )
 from backend.app.services.booking_address import service_mode_for_category, validate_service_address
 from backend.app.services.commission import platform_commission_rate, split_gross_amount
-from backend.app.services.notifications import notify_artisan
+from datetime import datetime, timedelta, timezone
+
+from backend.app.models.user import CustomerProfile
+from backend.app.services.artisan_calendar import slot_is_available
+from backend.app.services.notifications import notify_artisan, notify_customer
 from backend.app.services.storage import portfolio_image_url
 from sqlalchemy import select
 
@@ -112,13 +116,18 @@ def create_booking():
                 address_fields = validate_service_address(payload, service_mode_for_category(work.category))
             except ValueError as exc:
                 return jsonify({"success": False, "error": {"code": "INVALID_ADDRESS", "message": str(exc)}}), 400
-            if not profile.account_number or not profile.ifsc_code:
+            if not profile.account_holder_name or not profile.account_number or not profile.ifsc_code:
                 return jsonify({
                     "success": False,
                     "error": {
                         "code": "ARTISAN_PAYOUT_INCOMPLETE",
                         "message": "This artisan has not added bank details yet. Choose another artisan or try again later.",
                     },
+                }), 409
+            if not slot_is_available(session, artisan.id, str(payload["date"]), str(payload["time"])):
+                return jsonify({
+                    "success": False,
+                    "error": {"code": "SLOT_UNAVAILABLE", "message": "This artisan is not available at the selected date and time."},
                 }), 409
             booking = Booking(
                 customer_id=claims["sub"],
@@ -336,21 +345,49 @@ def verify_booking_payment(booking_id):
         current_app.logger.exception("Razorpay signature verification failed")
         return jsonify({"success": False, "error": {"code": "PAYMENT_VERIFICATION_FAILED", "message": "Payment could not be verified"}}), 400
 
+    acceptance_hours = int(current_app.config.get("ORDER_ACCEPTANCE_HOURS", 3))
     with session_factory.begin() as session:
         booking = session.get(Booking, booking_id)
         booking.payment_id = payment_id
         booking.payment_status = "PAID"
-        booking.status = "CONFIRMED"
+        booking.status = "AWAITING_ARTISAN"
+        booking.artisan_decision = "PENDING"
+        booking.acceptance_deadline = datetime.now(timezone.utc) + timedelta(hours=acceptance_hours)
         platform_fee, artisan_payout = split_gross_amount(booking.amount)
         booking.platform_fee = platform_fee
         booking.artisan_payout = artisan_payout
-        booking.payout_status = "SCHEDULED"
+        booking.payout_status = "HELD"
+        artisan = session.get(User, booking.artisan_id)
+        customer_user = session.get(User, booking.customer_id)
+        customer_profile = session.get(CustomerProfile, booking.customer_id)
+        customer_phone = (customer_profile.phone if customer_profile and customer_profile.phone else customer_user.phone if customer_user else "")
+        order_ref = booking.id[:8].upper()
+        artisan_phone = artisan.phone if artisan else ""
+        notify_customer(
+            session,
+            booking.customer_id,
+            "PAYMENT_CONFIRMED",
+            f"Order {order_ref} confirmed",
+            (
+                f"Payment of ₹{booking.amount} received for order #{order_ref}. "
+                f"Artisan: {artisan.name if artisan else 'your artist'}. "
+                f"Mobile: {artisan_phone or 'will be shared on acceptance'}. "
+                f"We will notify you when the artisan accepts."
+            ),
+            booking.id,
+        )
         notify_artisan(
             session,
             booking.artisan_id,
             "PAYMENT_RECEIVED",
-            "Payment received",
-            f"EZHA received ₹{booking.amount}. Your share (85% after commission) is ₹{artisan_payout} and will be transferred to your registered bank account.",
+            f"Paid order {order_ref} — confirm within {acceptance_hours} hours",
+            (
+                f"Customer: {customer_user.name if customer_user else 'Customer'} · "
+                f"Phone: {customer_phone or 'not provided'} · "
+                f"Date: {booking.service_date} {booking.service_time} · "
+                f"Amount: ₹{booking.amount} · Address: {booking.service_address_line1}, {booking.service_city}. "
+                f"Accept or reject before the deadline or the order auto-refunds."
+            ),
             booking.id,
         )
     return jsonify({
@@ -359,8 +396,9 @@ def verify_booking_payment(booking_id):
             "booking_id": booking_id,
             "payment_id": payment_id,
             "payment_status": "PAID",
-            "status": "CONFIRMED",
+            "status": "AWAITING_ARTISAN",
             "platform_fee": platform_fee,
             "artisan_payout": artisan_payout,
+            "acceptance_deadline": booking.acceptance_deadline.isoformat() if booking.acceptance_deadline else None,
         },
     }), 200

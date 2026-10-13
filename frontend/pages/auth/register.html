@@ -24,6 +24,8 @@
       .auth-form label { display: grid; gap: 7px; font-size: .88rem; font-weight: 600; }
       .auth-form input, .auth-form select { min-height: 48px; width: 100%; padding: 0 14px; border: 1px solid var(--border); border-radius: 10px; background: white; color: var(--text); }
       .artisan-fields { display: grid; gap: 13px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: rgba(255,255,255,.65); }
+      .otp-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+      .otp-row .btn { min-height: 48px; }
       .auth-form .btn { width: 100%; margin-top: 6px; }
       .auth-message { min-height: 24px; color: var(--primary); font-size: .9rem; }
       .auth-message[data-error="true"] { color: #a42336; }
@@ -36,30 +38,34 @@
     <main class="auth-layout">
       <section class="auth-visual">
         <a class="brand" href="/" aria-label="EZHA home"><img class="brand-logo" src="/static/assets/ezha-logo.png" alt="EZHA | The Signature of Success" /></a>
-        <div><span class="eyebrow" style="color:white;background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.2)">A marketplace for craft</span><h1>Your next chapter starts here.</h1><p>Find your people, share your work, and build a trusted presence around what you do best.</p></div>
+        <div><span class="eyebrow" style="color:white;background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.2)">A marketplace for craft</span><h1>Your next chapter starts here.</h1><p>Verify your email and mobile. We create your username automatically.</p></div>
       </section>
       <section class="auth-main">
         <div class="auth-form-wrap">
           <span class="eyebrow">Join EZHA</span>
           <h2>Create your account</h2>
-          <p class="auth-intro">Choose how you’ll use EZHA. You can sign in with your username and password.</p>
+          <p class="auth-intro">Sign in later with your email or mobile and password.</p>
           <form class="auth-form" id="register-form">
             <label>Create account as<select name="role" id="register-role" required><option value="CUSTOMER">Customer</option><option value="ARTISAN">Artisan</option></select></label>
             <label>Your name<input name="name" autocomplete="name" required /></label>
-            <label>Username<input name="username" autocomplete="username" minlength="3" required /></label>
             <label>Email<input name="email" type="email" autocomplete="email" required /></label>
+            <div class="otp-row">
+              <label style="flex:1">Email verification code<input name="email_otp" inputmode="numeric" maxlength="6" placeholder="6-digit code" /></label>
+              <button class="btn btn-secondary" type="button" data-send-otp="email">Send</button>
+            </div>
+            <label>Mobile number<input name="phone" inputmode="tel" autocomplete="tel" required /></label>
+            <div class="otp-row">
+              <label style="flex:1">Mobile verification code<input name="phone_otp" inputmode="numeric" maxlength="6" placeholder="6-digit code" /></label>
+              <button class="btn btn-secondary" type="button" data-send-otp="phone">Send</button>
+            </div>
             <label>Password<input name="password" type="password" autocomplete="new-password" minlength="8" required /></label>
             <div class="artisan-fields" id="artisan-fields" hidden>
-              <p style="font-size:.88rem;color:var(--muted)">Add the bank account where EZHA should send your share (85% after our 15% commission) when customers pay.</p>
-              <label>City<input name="city" autocomplete="address-level2" /></label>
+              <p style="font-size:.88rem;color:var(--muted)">Complete bank details in your artisan portal after sign-in.</p>
+              <label>City<input name="city" autocomplete="address-level2" required /></label>
               <label>Your main category<select name="category"><option value="MAKEUP">Makeup</option><option value="MEHENDI">Mehendi</option><option value="DRESS">Dress & tailoring (mail-in)</option><option value="FULL_PACKAGE">Full package</option></select></label>
-              <label>Account holder name<input name="account_holder_name" autocomplete="name" /></label>
-              <label>Bank account number<input name="account_number" inputmode="numeric" pattern="[0-9]{9,18}" autocomplete="off" /></label>
-              <label>IFSC code<input name="ifsc_code" autocomplete="off" maxlength="11" placeholder="HDFC0001234" /></label>
             </div>
             <div class="artisan-fields" id="customer-address-fields" hidden>
               <p style="font-size:.88rem;color:var(--muted)">Save your doorstep address for bridal makeup, mehendi, and styling at home.</p>
-              <label>Mobile number<input name="phone" inputmode="tel" autocomplete="tel" /></label>
               <label>Street / house no.<input name="address_line1" autocomplete="address-line1" /></label>
               <label>Area / landmark<input name="address_line2" autocomplete="address-line2" /></label>
               <label>City<input name="address_city" autocomplete="address-level2" /></label>

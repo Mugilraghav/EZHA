@@ -5,6 +5,18 @@
   border-block: 1px solid rgba(212, 175, 55, 0.08);
 }
 
+.ezha-tagline-ribbon {
+  background: linear-gradient(90deg, #064e3b, #7f1d1d);
+  color: #fde68a;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+}
+
 .site-header {
   transition: background var(--transition-luxury), box-shadow var(--transition-luxury), border-color var(--transition-luxury);
 }

@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from flask import Blueprint, current_app, jsonify, request
 
-from backend.app.auth import auth_service
+from sqlalchemy import or_, select
+
+from backend.app.auth import auth_service, normalize_phone
+from backend.app.models.user import User
 
 bp = Blueprint("auth", __name__, url_prefix="/api/v1/auth")
 service = auth_service
@@ -32,6 +35,8 @@ def register():
             account_number=payload.get("account_number", ""),
             ifsc_code=payload.get("ifsc_code", ""),
             phone=payload.get("phone", ""),
+            email_otp=payload.get("email_otp", ""),
+            phone_otp=payload.get("phone_otp", ""),
             address_line1=payload.get("address_line1", ""),
             address_line2=payload.get("address_line2", ""),
             address_city=payload.get("address_city", ""),
@@ -78,6 +83,59 @@ def refresh():
         return jsonify({"success": False, "error": {"code": "INVALID_TOKEN", "message": "Refresh token is invalid or expired"}}), 401
     user = {"id": claims["sub"], "email": claims["email"], "role": claims["role"], "name": claims["name"]}
     return jsonify({"success": True, "data": {"access_token": service.issue_token(user, "access")}, "message": "Token refresh successful"}), 200
+
+
+@bp.post("/otp/send")
+def send_otp():
+    payload = request.get_json(silent=True) or {}
+    try:
+        data = service.send_otp(
+            payload.get("channel", ""),
+            payload.get("destination", ""),
+            purpose=payload.get("purpose", "verify"),
+        )
+        return jsonify({"success": True, "data": data, "message": "Verification code sent"}), 200
+    except ValueError as exc:
+        return jsonify({"success": False, "error": {"code": "OTP_FAILED", "message": str(exc)}}), 400
+
+
+@bp.post("/forgot-password")
+def forgot_password():
+    payload = request.get_json(silent=True) or {}
+    identifier = (payload.get("identifier") or payload.get("email") or payload.get("phone") or "").strip()
+    if not identifier:
+        return jsonify({"success": False, "error": {"code": "MISSING_IDENTIFIER", "message": "Enter your email or mobile number"}}), 400
+    identifier_key = identifier.lower()
+    phone_key = normalize_phone(identifier)
+    session_factory = current_app.extensions["ezha_session_factory"]
+    with session_factory() as session:
+        filters = [User.email == identifier_key, User.username == identifier_key]
+        if phone_key:
+            filters.append(User.phone == phone_key)
+        user = session.scalar(select(User).where(or_(*filters)))
+    if not user:
+        return jsonify({"success": False, "error": {"code": "NOT_FOUND", "message": "No account found for this email or mobile number"}}), 404
+    channel = "email" if "@" in identifier_key else "phone"
+    destination = user.email if channel == "email" else user.phone
+    try:
+        data = service.send_otp(channel, destination, purpose="reset")
+        return jsonify({"success": True, "data": data, "message": "Password reset code sent"}), 200
+    except ValueError as exc:
+        return jsonify({"success": False, "error": {"code": "OTP_FAILED", "message": str(exc)}}), 400
+
+
+@bp.post("/reset-password")
+def reset_password():
+    payload = request.get_json(silent=True) or {}
+    try:
+        service.reset_password(
+            payload.get("identifier", ""),
+            payload.get("otp", "") or payload.get("code", ""),
+            payload.get("new_password", "") or payload.get("password", ""),
+        )
+        return jsonify({"success": True, "message": "Password updated. You can sign in now."}), 200
+    except ValueError as exc:
+        return jsonify({"success": False, "error": {"code": "RESET_FAILED", "message": str(exc)}}), 400
 
 
 @bp.get("/demo")

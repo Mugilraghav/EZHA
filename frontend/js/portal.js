@@ -32,25 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  document.querySelector('[data-focus-search]')?.addEventListener('click', () => {
-    document.querySelector('#service-search')?.focus();
-  });
-
-  document.querySelector('#landing-search-form')?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const serviceQuery = document.querySelector('#service-search').value.trim();
-    const cityQuery = document.querySelector('#location-search').value.trim();
-    const query = new URLSearchParams();
-    if (serviceQuery) query.set('q', serviceQuery);
-    if (cityQuery) query.set('city', cityQuery);
-    const returnTo = `/customer/services${query.size ? `?${query.toString()}` : ''}`;
-    if (token && user?.role === 'CUSTOMER') {
-      window.location.assign(returnTo);
-    } else {
-      window.location.assign(`/login?role=CUSTOMER&return_to=${encodeURIComponent(returnTo)}`);
-    }
-  });
-
   document.querySelectorAll('[data-logout]').forEach((button) => button.addEventListener('click', () => {
     localStorage.removeItem(tokenKey);
     localStorage.removeItem(userKey);
@@ -62,14 +43,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const roleSelect = loginForm.elements.role;
     const usernameInput = loginForm.elements.username;
-    const artisanPayoutLogin = document.querySelector('#artisan-payout-login');
-    const syncLoginRole = () => {
-      if (artisanPayoutLogin) artisanPayoutLogin.hidden = roleSelect.value !== 'ARTISAN';
-    };
     if (['CUSTOMER', 'ARTISAN', 'ADMIN'].includes(params.get('role'))) roleSelect.value = params.get('role');
     if (params.has('username')) usernameInput.value = params.get('username');
-    roleSelect.addEventListener('change', syncLoginRole);
-    syncLoginRole();
+    document.querySelector('#toggle-forgot')?.addEventListener('click', () => {
+      const panel = document.querySelector('#forgot-panel');
+      if (panel) panel.dataset.open = panel.dataset.open === 'true' ? 'false' : 'true';
+    });
+    document.querySelector('#forgot-send')?.addEventListener('click', async () => {
+      const identifier = document.querySelector('#forgot-identifier')?.value.trim();
+      if (!identifier) return showMessage('Enter your email or mobile number.', true);
+      showMessage('Sending reset code…');
+      try {
+        const response = await fetch('/api/v1/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier }),
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error?.message || 'Unable to send code.');
+        const hint = payload.data?.dev_code ? ` Dev code: ${payload.data.dev_code}` : '';
+        showMessage(`Reset code sent.${hint}`);
+      } catch (error) {
+        showMessage(error.message, true);
+      }
+    });
+    document.querySelector('#forgot-submit')?.addEventListener('click', async () => {
+      const identifier = document.querySelector('#forgot-identifier')?.value.trim();
+      const otp = document.querySelector('#forgot-otp')?.value.trim();
+      const newPassword = document.querySelector('#forgot-password')?.value;
+      showMessage('Updating password…');
+      try {
+        const response = await fetch('/api/v1/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier, otp, new_password: newPassword }),
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error?.message || 'Unable to reset password.');
+        showMessage(payload.message || 'Password updated. Sign in with your new password.');
+      } catch (error) {
+        showMessage(error.message, true);
+      }
+    });
     loginForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const form = new FormData(loginForm);
@@ -84,25 +99,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!response.ok) throw new Error(payload.error?.message || 'Unable to sign in. Check your credentials.');
         localStorage.setItem(tokenKey, payload.data.access_token);
         localStorage.setItem(userKey, JSON.stringify(payload.data.user));
-        if (payload.data.user.role === 'ARTISAN' && form.get('account_number') && form.get('ifsc_code')) {
-          await fetch('/api/v1/artisan/payout-profile', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${payload.data.access_token}` },
-            body: JSON.stringify({
-              account_holder_name: form.get('account_holder_name'),
-              account_number: form.get('account_number'),
-              ifsc_code: form.get('ifsc_code'),
-            }),
-          });
-        }
         const returnTo = params.get('return_to') || '';
         const allowedReturn = {
           CUSTOMER: returnTo.startsWith('/customer/services') ? returnTo : '',
           ARTISAN: returnTo === '/artisan/dashboard' ? returnTo : '',
           ADMIN: returnTo === '/admin/dashboard' ? returnTo : '',
         }[payload.data.user.role];
-        const artisanDest = payload.data.user.role === 'ARTISAN' && form.get('account_number') ? '/artisan/dashboard#payments' : '';
-        window.location.assign(allowedReturn || artisanDest || destination(payload.data.user.role));
+        window.location.assign(allowedReturn || destination(payload.data.user.role));
       } catch (error) {
         showMessage(error.message, true);
       }
@@ -119,14 +122,40 @@ document.addEventListener('DOMContentLoaded', () => {
       const isCustomer = registerForm.elements.role.value === 'CUSTOMER';
       artisanFields.hidden = !isArtisan;
       if (customerAddressFields) customerAddressFields.hidden = !isCustomer;
-      registerForm.elements.city.required = isArtisan;
-      ['account_holder_name', 'account_number', 'ifsc_code'].forEach((name) => {
-        if (registerForm.elements[name]) registerForm.elements[name].required = isArtisan;
-      });
+      if (registerForm.elements.city) registerForm.elements.city.required = isArtisan;
     };
     if (params.get('role') === 'ARTISAN') registerForm.elements.role.value = 'ARTISAN';
     registerForm.elements.role.addEventListener('change', syncArtisanFields);
     syncArtisanFields();
+    registerForm.querySelectorAll('[data-send-otp]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const channel = button.getAttribute('data-send-otp');
+        const destination = channel === 'email'
+          ? registerForm.elements.email.value.trim()
+          : registerForm.elements.phone.value.trim();
+        if (!destination) {
+          showMessage(channel === 'email' ? 'Enter your email first.' : 'Enter your mobile number first.', true);
+          return;
+        }
+        showMessage(`Sending ${channel} code…`);
+        try {
+          const response = await fetch('/api/v1/auth/otp/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channel, destination }),
+          });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error?.message || 'Unable to send code.');
+          if (payload.data?.dev_code) {
+            const field = channel === 'email' ? 'email_otp' : 'phone_otp';
+            if (registerForm.elements[field]) registerForm.elements[field].value = payload.data.dev_code;
+          }
+          showMessage(`Verification code sent to your ${channel}.`);
+        } catch (error) {
+          showMessage(error.message, true);
+        }
+      });
+    });
     registerForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const form = new FormData(registerForm);
@@ -173,10 +202,10 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelector('#booking-message').textContent = 'Choose a portfolio work before booking.';
       form.querySelector('button[type="submit"]').disabled = true;
     } else {
-      apiGet('/api/v1/customers/artisans').then((data) => {
-        const artisan = data.artisans.find((entry) => entry.works.some((work) => work.id === workId));
-        const work = artisan?.works.find((entry) => entry.id === workId);
-        if (!artisan || !work) throw new Error('This work is no longer available. Return to the catalog to choose another.');
+      apiGet('/api/v1/customers/works?per_page=48').then((data) => {
+        const work = (data.works || []).find((entry) => entry.id === workId);
+        if (!work) throw new Error('This work is no longer available. Return to the catalog to choose another.');
+        const artisan = { id: work.artisan_id, name: work.artisan_name, city: work.artisan_city };
         document.querySelector('#booking-title').textContent = work.title;
         document.querySelector('#booking-artisan').textContent = `${artisan.name} · ${artisan.city || 'India'} · Artisan ID ${artisan.id}`;
         document.querySelector('#booking-summary-title').textContent = work.title;
@@ -192,6 +221,42 @@ document.addEventListener('DOMContentLoaded', () => {
         const image = document.querySelector('#booking-image');
         image.src = work.image_url;
         image.hidden = false;
+        const calendarPanel = document.querySelector('#artisan-calendar-panel');
+        const calendarGrid = document.querySelector('#artisan-calendar-grid');
+        const dateInput = document.querySelector('#booking-date');
+        const timeInput = document.querySelector('#booking-time');
+        const slotMessage = document.querySelector('#slot-availability-message');
+        const paintCalendar = (calendarData) => {
+          if (!calendarGrid) return;
+          const days = calendarData.days || {};
+          calendarGrid.innerHTML = Object.keys(days).sort().map((dateKey) => {
+            const day = days[dateKey];
+            const dayNum = dateKey.split('-')[2];
+            const classes = ['calendar-day', day.status === 'available' ? 'available' : (day.status === 'blocked' ? 'blocked' : 'partial')];
+            if (dateInput?.value === dateKey) classes.push('selected');
+            return `<button type="button" class="${classes.join(' ')}" data-cal-date="${dateKey}">${dayNum}</button>`;
+          }).join('');
+          calendarGrid.querySelectorAll('[data-cal-date]').forEach((button) => {
+            button.addEventListener('click', () => {
+              if (dateInput) dateInput.value = button.getAttribute('data-cal-date');
+              paintCalendar(calendarData);
+              checkSlot();
+            });
+          });
+        };
+        const checkSlot = async () => {
+          if (!dateInput?.value || !timeInput?.value || !slotMessage) return;
+          const result = await apiGet(`/api/v1/customers/artisans/${encodeURIComponent(artisan.id)}/slot-check?date=${encodeURIComponent(dateInput.value)}&time=${encodeURIComponent(timeInput.value)}`);
+          slotMessage.textContent = result.available ? 'This slot is available.' : 'This slot is unavailable — choose another date or time (shown in red on the calendar).';
+          slotMessage.style.color = result.available ? '#0f7a50' : '#991b1b';
+        };
+        const now = new Date();
+        apiGet(`/api/v1/customers/artisans/${encodeURIComponent(artisan.id)}/calendar?year=${now.getFullYear()}&month=${now.getMonth() + 1}`).then((calendarData) => {
+          if (calendarPanel) calendarPanel.hidden = false;
+          paintCalendar(calendarData);
+        }).catch(() => {});
+        dateInput?.addEventListener('change', checkSlot);
+        timeInput?.addEventListener('change', checkSlot);
         apiGet('/api/v1/customers/me').then((profileData) => {
           const profile = profileData.profile || {};
           if (profile.address_line1) form.elements.address_line1.value = profile.address_line1;
@@ -332,6 +397,9 @@ document.addEventListener('DOMContentLoaded', () => {
       customerAddressForm.elements.address_city.value = profile.city || '';
       customerAddressForm.elements.address_state.value = profile.state || '';
       customerAddressForm.elements.pincode.value = profile.pincode || '';
+      if (profile.address_line1 && profile.pincode) {
+        document.querySelector('#customer-address-panel')?.setAttribute('hidden', '');
+      }
     }).catch(() => {});
     customerAddressForm.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -344,42 +412,113 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify(Object.fromEntries(form.entries())),
       });
       const payload = await response.json();
-      messageEl.textContent = response.ok ? 'Doorstep address saved.' : (payload.error?.message || 'Unable to save address.');
+      if (!response.ok) {
+        messageEl.textContent = payload.error?.message || 'Unable to save address.';
+        return;
+      }
+      messageEl.textContent = '';
+      const panel = document.querySelector('#customer-address-panel');
+      const hurray = document.querySelector('#address-hurray');
+      if (panel) panel.hidden = true;
+      if (hurray) hurray.hidden = false;
+      document.querySelector('#hurray-dismiss')?.addEventListener('click', () => { hurray.hidden = true; }, { once: true });
     });
   }
+  const workCardPayload = (work) => ({
+    id: work.id,
+    title: work.title,
+    price: work.price,
+    image_url: work.image_url,
+    artisan_name: work.artisan_name,
+    artisan_id: work.artisan_id,
+    category: work.category,
+  });
+
   if (serviceGroups) {
-    let artisans = [];
-    const categoryNames = { MAKEUP: 'Makeup', MEHENDI: 'Mehendi', DRESS: 'Dress', FULL_PACKAGE: 'Full package' };
-    const renderArtisans = () => {
-      const query = document.querySelector('#service-search').value.trim().toLowerCase();
-      const category = document.querySelector('#category-filter').value;
-      const city = document.querySelector('#city-filter').value.toLowerCase();
-      const groups = new Map();
-      artisans.forEach((artisan) => {
-        if (city && artisan.city.toLowerCase() !== city) return;
-        const works = artisan.works.filter((work) => (!category || work.category === category) && `${work.title} ${work.caption} ${artisan.name} ${artisan.username} ${artisan.city}`.toLowerCase().includes(query));
-        if (category && !works.length) return;
-        const visibleWorks = category ? works : works;
-        const groupKeys = category ? [category] : [...new Set(visibleWorks.map((work) => work.category))];
-        if (!groupKeys.length && !query && !category) groupKeys.push(artisan.category || 'MAKEUP');
-        groupKeys.forEach((group) => groups.set(group, [...(groups.get(group) || []), { artisan, works: visibleWorks.filter((work) => work.category === group) }]));
-      });
-      serviceGroups.innerHTML = groups.size ? [...groups].map(([key, entries]) => `
-        <section class="service-group"><h2>${escapeHtml(categoryNames[key] || key)}</h2><div class="artisan-grid">${entries.map(({ artisan, works }) => `
-          <article class="artisan-card"><div class="artisan-heading"><div><h3>${escapeHtml(artisan.name)}</h3><p>@${escapeHtml(artisan.username)} · ${escapeHtml(artisan.city || 'India')}</p></div><span class="vendor-badge">Artisan</span></div><p class="artisan-id">Artisan ID: ${escapeHtml(artisan.id)}</p>${works.length ? `<div class="work-grid">${works.map((work) => `<article class="work-card"><img src="${escapeHtml(work.image_url)}" alt="${escapeHtml(work.title)} by ${escapeHtml(artisan.name)}"><div class="work-copy"><h4>${escapeHtml(work.title)}</h4><p>${escapeHtml(work.caption)}</p><div class="work-price">${currency(work.price)}</div><a class="btn btn-primary" href="/booking?work_id=${encodeURIComponent(work.id)}">Book this work</a></div></article>`).join('')}</div>` : '<p class="no-work">This artisan is setting up their portfolio.</p>'}</article>`).join('')}</div></section>`).join('') : '<p class="empty-state">No artisans or works match these filters yet.</p>';
+    let currentPage = 1;
+    const renderWorksPage = async () => {
+      const q = document.querySelector('#service-search')?.value.trim() || '';
+      const category = document.querySelector('#category-filter')?.value || '';
+      const city = document.querySelector('#city-filter')?.value || '';
+      const query = new URLSearchParams({ page: String(currentPage), per_page: '8' });
+      if (q) query.set('q', q);
+      if (category) query.set('category', category);
+      if (city) query.set('city', city);
+      serviceGroups.innerHTML = '<p class="empty-state" style="grid-column:1/-1">Loading services…</p>';
+      try {
+        const data = await apiGet(`/api/v1/customers/works?${query.toString()}`);
+        const works = data.works || [];
+        serviceGroups.innerHTML = works.length ? works.map((work) => `
+          <article class="product-card">
+            <img src="${escapeHtml(work.image_url)}" alt="${escapeHtml(work.title)}" loading="lazy" />
+            <div class="product-body">
+              <h3>${escapeHtml(work.title)}</h3>
+              <p class="product-meta">${escapeHtml(work.artisan_name)} · ${escapeHtml(work.artisan_city || 'India')}</p>
+              <div class="product-price">${currency(work.price)}</div>
+              <div class="product-actions">
+                <button type="button" class="btn btn-secondary" data-add-cart="${escapeHtml(work.id)}">Add to cart</button>
+                <a class="btn btn-primary" href="/booking?work_id=${encodeURIComponent(work.id)}">Buy now</a>
+              </div>
+            </div>
+          </article>`).join('') : '<p class="empty-state" style="grid-column:1/-1">No services match your filters yet.</p>';
+        const pagination = document.querySelector('#works-pagination');
+        if (pagination && data.pagination) {
+          const { page, total_pages } = data.pagination;
+          pagination.innerHTML = total_pages > 1 ? Array.from({ length: total_pages }, (_, index) => {
+            const pageNumber = index + 1;
+            return `<button type="button" class="btn ${pageNumber === page ? 'btn-primary' : 'btn-secondary'}" data-page="${pageNumber}">${pageNumber}</button>`;
+          }).join('') : '';
+          pagination.querySelectorAll('[data-page]').forEach((button) => {
+            button.addEventListener('click', () => {
+              currentPage = Number(button.getAttribute('data-page'));
+              renderWorksPage();
+            });
+          });
+        }
+        serviceGroups.querySelectorAll('[data-add-cart]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const work = works.find((entry) => entry.id === button.getAttribute('data-add-cart'));
+            if (work && typeof addToCart === 'function') {
+              addToCart(workCardPayload(work));
+              button.textContent = 'Added';
+            }
+          });
+        });
+      } catch (error) {
+        serviceGroups.innerHTML = `<p class="empty-state" style="grid-column:1/-1">${escapeHtml(error.message)}</p>`;
+      }
     };
-    apiGet('/api/v1/customers/artisans').then((data) => {
-      artisans = data.artisans;
-      const params = new URLSearchParams(window.location.search);
-      document.querySelector('#service-search').value = params.get('q') || '';
-      document.querySelector('#city-filter').value = params.get('city') || '';
-      document.querySelector('#category-filter').value = params.get('category') || '';
-      if (params.has('service_id')) document.querySelector('#category-filter').value = 'MAKEUP';
-      renderArtisans();
-    }).catch((error) => { serviceGroups.innerHTML = `<p class="empty-state">${escapeHtml(error.message)} <a href="/login">Sign in</a></p>`; });
-    document.querySelector('#service-search').addEventListener('input', renderArtisans);
-    document.querySelector('#category-filter').addEventListener('change', renderArtisans);
-    document.querySelector('#city-filter').addEventListener('change', renderArtisans);
+    const params = new URLSearchParams(window.location.search);
+    if (document.querySelector('#service-search')) document.querySelector('#service-search').value = params.get('q') || '';
+    if (document.querySelector('#city-filter')) document.querySelector('#city-filter').value = params.get('city') || '';
+    if (document.querySelector('#category-filter')) document.querySelector('#category-filter').value = params.get('category') || '';
+    renderWorksPage();
+    document.querySelector('#service-search')?.addEventListener('input', () => { currentPage = 1; renderWorksPage(); });
+    document.querySelector('#category-filter')?.addEventListener('change', () => { currentPage = 1; renderWorksPage(); });
+    document.querySelector('#city-filter')?.addEventListener('change', () => { currentPage = 1; renderWorksPage(); });
+  }
+
+  const cartItemsEl = document.querySelector('#cart-items');
+  if (cartItemsEl && typeof readCart === 'function') {
+    const renderCart = () => {
+      const items = readCart();
+      cartItemsEl.innerHTML = items.length ? items.map((work) => `
+        <article class="cart-row">
+          <img src="${escapeHtml(work.image_url)}" alt="${escapeHtml(work.title)}" />
+          <div><strong>${escapeHtml(work.title)}</strong><p>${escapeHtml(work.artisan_name)} · ${currency(work.price)}</p></div>
+          <div class="cart-actions">
+            <a class="btn btn-primary" href="/booking?work_id=${encodeURIComponent(work.id)}">Buy now</a>
+            <button type="button" class="btn btn-ghost" data-remove-cart="${escapeHtml(work.id)}">Remove</button>
+          </div>
+        </article>`).join('') : '<p class="empty-state">Your cart is empty.</p>';
+      cartItemsEl.querySelectorAll('[data-remove-cart]').forEach((button) => {
+        button.addEventListener('click', () => {
+          removeFromCart(button.getAttribute('data-remove-cart'));
+          renderCart();
+        });
+      });
+    };
+    renderCart();
   }
 
   const artisanRoot = document.querySelector('#artisan-dashboard');
@@ -389,7 +528,47 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelector('#artisan-orders').textContent = data.metrics.total_orders;
       document.querySelector('#artisan-earnings').textContent = currency(data.payments.available_balance);
       document.querySelector('#artisan-pending').textContent = currency(data.payments.pending_balance);
-      document.querySelector('#artisan-orders-list').innerHTML = data.orders.map((order) => `<div class="table-row"><div><strong>${escapeHtml(order.service)}</strong><small>${escapeHtml(order.customer)} · ${escapeHtml(order.date)} · ${escapeHtml(order.service_address || '')}</small></div><span class="status status-${escapeHtml(order.status.toLowerCase())}">${escapeHtml(order.status)}</span><strong>${currency(order.artisan_payout || order.amount)}</strong></div>`).join('') || '<p>No orders yet.</p>';
+      document.querySelector('#artisan-orders-list').innerHTML = data.orders.map((order) => `
+        <article class="notification-item" style="margin-bottom:12px">
+          <div class="table-row" style="border:none;padding:0">
+            <div>
+              <strong>${escapeHtml(order.service)}</strong>
+              <small>${escapeHtml(order.customer)} · ${escapeHtml(order.customer_phone || '')} · ${escapeHtml(order.customer_email || '')}</small>
+              <small>${escapeHtml(order.date)} ${escapeHtml(order.time || '')} · ${escapeHtml(order.service_address || '')}</small>
+              <small>Notes: ${escapeHtml(order.notes || '—')}</small>
+            </div>
+            <span class="status status-${escapeHtml((order.status || 'pending').toLowerCase())}">${escapeHtml(order.status)}</span>
+            <strong>${currency(order.artisan_payout || order.amount)}</strong>
+          </div>
+          ${order.can_respond ? `<div style="display:flex;gap:8px;margin-top:10px">
+            <button type="button" class="btn btn-primary" data-accept-order="${escapeHtml(order.id)}">Confirm order</button>
+            <button type="button" class="btn btn-secondary" data-reject-order="${escapeHtml(order.id)}">Reject & refund</button>
+          </div>` : ''}
+        </article>`).join('') || '<p>No orders yet.</p>';
+      document.querySelectorAll('[data-accept-order]').forEach((button) => {
+        button.addEventListener('click', async () => {
+          const orderId = button.getAttribute('data-accept-order');
+          const response = await fetch(`/api/v1/artisan/orders/${encodeURIComponent(orderId)}/accept`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${localStorage.getItem(tokenKey) || ''}` },
+          });
+          const payload = await response.json();
+          document.querySelector('#artisan-error').textContent = response.ok ? payload.message : (payload.error?.message || 'Unable to accept order.');
+          if (response.ok) window.location.reload();
+        });
+      });
+      document.querySelectorAll('[data-reject-order]').forEach((button) => {
+        button.addEventListener('click', async () => {
+          const orderId = button.getAttribute('data-reject-order');
+          const response = await fetch(`/api/v1/artisan/orders/${encodeURIComponent(orderId)}/reject`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${localStorage.getItem(tokenKey) || ''}` },
+          });
+          const payload = await response.json();
+          document.querySelector('#artisan-error').textContent = response.ok ? payload.message : (payload.error?.message || 'Unable to reject order.');
+          if (response.ok) window.location.reload();
+        });
+      });
       const notificationsEl = document.querySelector('#artisan-notifications');
       if (notificationsEl) {
         notificationsEl.innerHTML = (data.notifications || []).length
@@ -402,8 +581,36 @@ document.addEventListener('DOMContentLoaded', () => {
         payoutForm.elements.account_holder_name.value = payout.account_holder_name || '';
         payoutForm.elements.ifsc_code.value = payout.ifsc_code || '';
       }
+      const steps = [
+        { label: 'City & category', done: Boolean(data.profile?.city && data.profile?.category) },
+        { label: 'Portfolio work uploaded', done: (data.portfolio || []).length > 0 },
+        { label: 'Payout bank details', done: Boolean(payout?.configured) },
+      ];
+      const completed = steps.filter((step) => step.done).length;
+      const pct = Math.round((completed / steps.length) * 100);
+      const ring = document.querySelector('#profile-ring');
+      if (ring) {
+        ring.style.setProperty('--pct', String(pct));
+        ring.dataset.label = `${pct}%`;
+      }
+      const checklist = document.querySelector('#profile-checklist');
+      if (checklist) {
+        checklist.innerHTML = steps.map((step) => `<span class="${step.done ? 'done' : ''}">${step.done ? '✓' : '○'} ${step.label}</span>`).join('');
+      }
       renderPortfolio(data.portfolio);
     }).catch((error) => { document.querySelector('#artisan-error').textContent = error.message; });
+    document.querySelector('#calendar-block-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = new FormData(event.currentTarget);
+      const response = await fetch('/api/v1/artisan/calendar/blocks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem(tokenKey) || ''}` },
+        body: JSON.stringify(Object.fromEntries(form.entries())),
+      });
+      const payload = await response.json();
+      document.querySelector('#calendar-block-message').textContent = response.ok ? payload.message : (payload.error?.message || 'Unable to save.');
+      if (response.ok) event.currentTarget.reset();
+    });
     document.querySelector('#payout-form')?.addEventListener('submit', async (event) => {
       event.preventDefault();
       const form = new FormData(event.currentTarget);
