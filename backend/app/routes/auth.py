@@ -20,7 +20,24 @@ def register():
     category = payload.get("category", "MAKEUP")
 
     try:
-        user = service.register(email=email, password=password, role=role, name=name, username=username, city=city, category=category)
+        user = service.register(
+            email=email,
+            password=password,
+            role=role,
+            name=name,
+            username=username,
+            city=city,
+            category=category,
+            account_holder_name=payload.get("account_holder_name", ""),
+            account_number=payload.get("account_number", ""),
+            ifsc_code=payload.get("ifsc_code", ""),
+            phone=payload.get("phone", ""),
+            address_line1=payload.get("address_line1", ""),
+            address_line2=payload.get("address_line2", ""),
+            address_city=payload.get("address_city", ""),
+            address_state=payload.get("address_state", ""),
+            pincode=payload.get("pincode", ""),
+        )
         return jsonify({"success": True, "data": user, "message": "Registration successful"}), 201
     except ValueError as exc:
         return jsonify({"success": False, "error": {"code": "REGISTRATION_FAILED", "message": str(exc)}}), 400

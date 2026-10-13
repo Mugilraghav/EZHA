@@ -2,9 +2,9 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(255, 249, 245, 0.8);
+  background: rgba(15, 61, 50, 0.88);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(110, 33, 66, 0.08);
+  border-bottom: 1px solid rgba(201, 162, 39, 0.2);
 }
 
 .navbar {
@@ -45,17 +45,17 @@
   align-items: center;
   gap: 28px;
   font-size: 0.96rem;
-  color: var(--text);
+  color: #f8f1e3;
 }
 
 .nav-links a {
-  color: var(--muted);
+  color: rgba(248, 241, 227, 0.78);
   transition: color 0.2s ease;
 }
 
 .nav-links a:hover,
 .nav-links a:focus-visible {
-  color: var(--primary);
+  color: var(--accent);
 }
 
 .nav-actions {
@@ -82,15 +82,16 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  box-shadow: 0 16px 28px rgba(110, 33, 66, 0.18);
-  color: #fff;
+  background: linear-gradient(135deg, var(--button) 0%, var(--accent-deep) 100%);
+  box-shadow: 0 16px 28px rgba(122, 90, 31, 0.28);
+  color: #fffaf0;
+  border-color: rgba(139, 90, 43, 0.35);
 }
 
 .btn-secondary {
-  background: rgba(110, 33, 66, 0.06);
-  border-color: rgba(110, 33, 66, 0.12);
-  color: var(--primary);
+  background: rgba(248, 241, 227, 0.12);
+  border-color: rgba(201, 162, 39, 0.35);
+  color: #f8f1e3;
 }
 
 .btn-ghost {

@@ -12,7 +12,13 @@
     <link rel="stylesheet" href="/static/css/components.css" />
     <link rel="stylesheet" href="/static/css/responsive.css" />
     <style>
-      body { background: #fffaf8; }
+      body { background: transparent; }
+      .stat-card, .panel { background: var(--surface); }
+      .notification-list { display:grid; gap:10px; margin-top:14px; }
+      .notification-item { border:1px solid var(--border); border-radius:14px; padding:12px 14px; background:#fff; }
+      .notification-item.unread { border-color: rgba(201,162,39,.45); background: rgba(201,162,39,.08); }
+      .payout-form { display:grid; gap:12px; margin-top:16px; max-width:480px; }
+      .payout-form input { min-height:46px; border:1px solid var(--border); border-radius:8px; padding:10px; }
       .dash-shell { padding: 64px 0 90px; }
       .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
       .stat-card { background: #fff; border: 1px solid var(--border); border-radius: 22px; padding: 24px; box-shadow: 0 12px 28px rgba(36,33,36,0.04); }
@@ -109,7 +115,22 @@
           <div class="portfolio-grid" id="portfolio-grid"><p class="empty-state">Loading portfolio…</p></div>
         </div>
       </section>
-      <section class="panel" id="payments" style="margin-top: 26px;"><h2>Payments</h2><p>Confirmed earnings and pending amounts are summarized above. Payout settlement will connect to the payment provider in a later phase.</p></section>
+      <section class="panel" id="notifications" style="margin-top: 26px;">
+        <h2>Notifications</h2>
+        <p>Order alerts and payment updates when EZHA receives customer payments.</p>
+        <div class="notification-list" id="artisan-notifications"><p class="empty-state">Loading…</p></div>
+      </section>
+      <section class="panel" id="payments" style="margin-top: 26px;">
+        <h2>Payout bank account</h2>
+        <p>EZHA keeps a 15% commission; the remaining 85% is transferred to this account after each paid booking.</p>
+        <form class="payout-form" id="payout-form">
+          <label>Account holder name<input name="account_holder_name" required /></label>
+          <label>Bank account number<input name="account_number" inputmode="numeric" pattern="[0-9]{9,18}" required /></label>
+          <label>IFSC code<input name="ifsc_code" maxlength="11" required placeholder="HDFC0001234" /></label>
+          <button class="btn btn-primary" type="submit">Save payout details</button>
+        </form>
+        <p id="payout-message" role="status"></p>
+      </section>
     </main>
 
     <footer class="site-footer">

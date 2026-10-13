@@ -14,6 +14,21 @@ class TestConfig:
     RAZORPAY_KEY_SECRET = ""
 
 
+DOORSTEP_ADDRESS = {
+    "address_line1": "12 Palace View Apartments",
+    "address_line2": "Koramangala",
+    "address_city": "Bengaluru",
+    "address_state": "Karnataka",
+    "pincode": "560034",
+}
+
+ARTISAN_BANK = {
+    "account_holder_name": "Meera Artist",
+    "account_number": "987654321012",
+    "ifsc_code": "SBIN0001234",
+}
+
+
 def create_app(config_class=TestConfig):
     return app_factory(config_class)
 
@@ -63,6 +78,7 @@ def test_registered_artisan_and_categorized_work_appear_to_customers(tmp_path):
             "role": "ARTISAN",
             "city": "Chennai",
             "category": "MEHENDI",
+            **ARTISAN_BANK,
         },
     )
     assert registration.status_code == 201
@@ -109,7 +125,7 @@ def test_registered_artisan_and_categorized_work_appear_to_customers(tmp_path):
     booking_response = client.post(
         "/api/v1/bookings",
         headers={"Authorization": f"Bearer {customer_token}"},
-        json={"work_id": work_id, "date": "2026-12-12", "time": "11:00", "notes": "Bridal mehendi"},
+        json={"work_id": work_id, "date": "2026-12-12", "time": "11:00", "notes": "Bridal mehendi", **DOORSTEP_ADDRESS},
     )
     assert booking_response.status_code == 201
     booking_id = booking_response.get_json()["data"]["id"]
@@ -431,6 +447,7 @@ def test_role_registration_and_login_are_role_specific():
             "password": "studio-pass-123",
             "name": "Mira Artist",
             "role": "ARTISAN",
+            **ARTISAN_BANK,
         },
     )
     assert registration.status_code == 201

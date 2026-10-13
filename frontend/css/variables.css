@@ -1,16 +1,20 @@
 :root {
-  --primary: #6e2142;
-  --primary-dark: #4d1732;
-  --secondary: #b76e79;
+  --primary: #1a5c4a;
+  --primary-dark: #0f3d32;
+  --secondary: #2d7a62;
   --accent: #c9a227;
-  --accent-soft: #f5e8b8;
-  --background: #fff9f5;
-  --surface: #ffffff;
-  --surface-strong: #fdf3ef;
-  --text: #242124;
-  --muted: #777277;
-  --border: #f0e3e9;
-  --shadow: 0 20px 40px rgba(94, 49, 69, 0.12);
+  --accent-deep: #8b5a2b;
+  --button: #a67c2e;
+  --button-dark: #7a5a1f;
+  --accent-soft: #f3e2b8;
+  --background: #0f3d32;
+  --background-soft: #134e3f;
+  --surface: #f8f1e3;
+  --surface-strong: #efe4cf;
+  --text: #1f1a14;
+  --muted: #5c5348;
+  --border: #d4c4a0;
+  --shadow: 0 20px 40px rgba(15, 61, 50, 0.22);
   --radius: 24px;
 }
 
@@ -29,9 +33,13 @@ html {
 body {
   margin: 0;
   font-family: "Inter", sans-serif;
-  background: linear-gradient(180deg, #fffaf7 0%, #fffaf8 100%);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(201, 162, 39, 0.12), transparent 28%),
+    radial-gradient(circle at 88% 4%, rgba(201, 162, 39, 0.08), transparent 24%),
+    linear-gradient(165deg, var(--background) 0%, var(--background-soft) 42%, #0b2f27 100%);
   color: var(--text);
   line-height: 1.6;
+  min-height: 100vh;
 }
 
 a {
@@ -46,7 +54,8 @@ img {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -71,9 +80,9 @@ select {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--primary);
-  background: rgba(110, 33, 66, 0.08);
-  border: 1px solid rgba(110, 33, 66, 0.08);
+  color: var(--accent-deep);
+  background: rgba(201, 162, 39, 0.14);
+  border: 1px solid rgba(139, 90, 43, 0.22);
   border-radius: 999px;
   padding: 0.6rem 1rem;
 }

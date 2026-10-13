@@ -10,6 +10,9 @@ from backend.app.services.payments import (
     PaymentSignatureError,
     RazorpayProvider,
 )
+from backend.app.services.booking_address import service_mode_for_category, validate_service_address
+from backend.app.services.commission import platform_commission_rate, split_gross_amount
+from backend.app.services.notifications import notify_artisan
 from backend.app.services.storage import portfolio_image_url
 from sqlalchemy import select
 
@@ -105,6 +108,18 @@ def create_booking():
             if not result:
                 return jsonify({"success": False, "error": {"code": "WORK_NOT_FOUND", "message": "This artisan work is no longer available"}}), 404
             work, artisan, profile = result
+            try:
+                address_fields = validate_service_address(payload, service_mode_for_category(work.category))
+            except ValueError as exc:
+                return jsonify({"success": False, "error": {"code": "INVALID_ADDRESS", "message": str(exc)}}), 400
+            if not profile.account_number or not profile.ifsc_code:
+                return jsonify({
+                    "success": False,
+                    "error": {
+                        "code": "ARTISAN_PAYOUT_INCOMPLETE",
+                        "message": "This artisan has not added bank details yet. Choose another artisan or try again later.",
+                    },
+                }), 409
             booking = Booking(
                 customer_id=claims["sub"],
                 artisan_id=artisan.id,
@@ -113,9 +128,20 @@ def create_booking():
                 service_time=str(payload["time"]),
                 notes=str(payload.get("notes", ""))[:1000],
                 amount=work.price,
+                **address_fields,
             )
             session.add(booking)
             session.flush()
+            mode_label = "mail-in tailoring" if booking.service_mode == "MAIL_IN" else "doorstep service"
+            notify_artisan(
+                session,
+                artisan.id,
+                "NEW_ORDER",
+                "New booking request",
+                f"{claims.get('name', 'A customer')} requested {work.title} ({mode_label}) on {booking.service_date}.",
+                booking.id,
+            )
+            platform_fee, artisan_payout = split_gross_amount(work.price)
             booking_data = {
                 "id": booking.id,
                 "work_id": work.id,
@@ -130,6 +156,17 @@ def create_booking():
                 "time": booking.service_time,
                 "notes": booking.notes,
                 "amount": booking.amount,
+                "platform_fee": platform_fee,
+                "artisan_payout": artisan_payout,
+                "commission_rate": platform_commission_rate(),
+                "service_mode": booking.service_mode,
+                "service_address": {
+                    "line1": booking.service_address_line1,
+                    "line2": booking.service_address_line2,
+                    "city": booking.service_city,
+                    "state": booking.service_state,
+                    "pincode": booking.service_pincode,
+                },
                 "status": booking.status,
                 "payment_status": booking.payment_status,
             }
@@ -182,6 +219,8 @@ def get_booking(booking_id):
         if not result:
             return jsonify({"success": False, "error": {"code": "NOT_FOUND", "message": "Booking not found"}}), 404
         booking, work, artisan, profile = result
+        platform_fee = booking.platform_fee if booking.platform_fee is not None else split_gross_amount(booking.amount)[0]
+        artisan_payout = booking.artisan_payout if booking.artisan_payout is not None else split_gross_amount(booking.amount)[1]
         data = {
             "id": booking.id,
             "work_id": work.id,
@@ -195,6 +234,17 @@ def get_booking(booking_id):
             "date": booking.service_date,
             "time": booking.service_time,
             "amount": booking.amount,
+            "platform_fee": platform_fee,
+            "artisan_payout": artisan_payout,
+            "commission_rate": platform_commission_rate(),
+            "service_mode": booking.service_mode,
+            "service_address": {
+                "line1": booking.service_address_line1,
+                "line2": booking.service_address_line2,
+                "city": booking.service_city,
+                "state": booking.service_state,
+                "pincode": booking.service_pincode,
+            },
             "status": booking.status,
             "payment_status": booking.payment_status,
         }
@@ -291,4 +341,26 @@ def verify_booking_payment(booking_id):
         booking.payment_id = payment_id
         booking.payment_status = "PAID"
         booking.status = "CONFIRMED"
-    return jsonify({"success": True, "data": {"booking_id": booking_id, "payment_id": payment_id, "payment_status": "PAID", "status": "CONFIRMED"}}), 200
+        platform_fee, artisan_payout = split_gross_amount(booking.amount)
+        booking.platform_fee = platform_fee
+        booking.artisan_payout = artisan_payout
+        booking.payout_status = "SCHEDULED"
+        notify_artisan(
+            session,
+            booking.artisan_id,
+            "PAYMENT_RECEIVED",
+            "Payment received",
+            f"EZHA received ₹{booking.amount}. Your share (85% after commission) is ₹{artisan_payout} and will be transferred to your registered bank account.",
+            booking.id,
+        )
+    return jsonify({
+        "success": True,
+        "data": {
+            "booking_id": booking_id,
+            "payment_id": payment_id,
+            "payment_status": "PAID",
+            "status": "CONFIRMED",
+            "platform_fee": platform_fee,
+            "artisan_payout": artisan_payout,
+        },
+    }), 200

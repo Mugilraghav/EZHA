@@ -62,8 +62,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const roleSelect = loginForm.elements.role;
     const usernameInput = loginForm.elements.username;
+    const artisanPayoutLogin = document.querySelector('#artisan-payout-login');
+    const syncLoginRole = () => {
+      if (artisanPayoutLogin) artisanPayoutLogin.hidden = roleSelect.value !== 'ARTISAN';
+    };
     if (['CUSTOMER', 'ARTISAN', 'ADMIN'].includes(params.get('role'))) roleSelect.value = params.get('role');
     if (params.has('username')) usernameInput.value = params.get('username');
+    roleSelect.addEventListener('change', syncLoginRole);
+    syncLoginRole();
     loginForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const form = new FormData(loginForm);
@@ -78,13 +84,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!response.ok) throw new Error(payload.error?.message || 'Unable to sign in. Check your credentials.');
         localStorage.setItem(tokenKey, payload.data.access_token);
         localStorage.setItem(userKey, JSON.stringify(payload.data.user));
+        if (payload.data.user.role === 'ARTISAN' && form.get('account_number') && form.get('ifsc_code')) {
+          await fetch('/api/v1/artisan/payout-profile', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${payload.data.access_token}` },
+            body: JSON.stringify({
+              account_holder_name: form.get('account_holder_name'),
+              account_number: form.get('account_number'),
+              ifsc_code: form.get('ifsc_code'),
+            }),
+          });
+        }
         const returnTo = params.get('return_to') || '';
         const allowedReturn = {
           CUSTOMER: returnTo.startsWith('/customer/services') ? returnTo : '',
           ARTISAN: returnTo === '/artisan/dashboard' ? returnTo : '',
           ADMIN: returnTo === '/admin/dashboard' ? returnTo : '',
         }[payload.data.user.role];
-        window.location.assign(allowedReturn || destination(payload.data.user.role));
+        const artisanDest = payload.data.user.role === 'ARTISAN' && form.get('account_number') ? '/artisan/dashboard#payments' : '';
+        window.location.assign(allowedReturn || artisanDest || destination(payload.data.user.role));
       } catch (error) {
         showMessage(error.message, true);
       }
@@ -95,10 +113,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (registerForm) {
     const params = new URLSearchParams(window.location.search);
     const artisanFields = document.querySelector('#artisan-fields');
+    const customerAddressFields = document.querySelector('#customer-address-fields');
     const syncArtisanFields = () => {
       const isArtisan = registerForm.elements.role.value === 'ARTISAN';
+      const isCustomer = registerForm.elements.role.value === 'CUSTOMER';
       artisanFields.hidden = !isArtisan;
+      if (customerAddressFields) customerAddressFields.hidden = !isCustomer;
       registerForm.elements.city.required = isArtisan;
+      ['account_holder_name', 'account_number', 'ifsc_code'].forEach((name) => {
+        if (registerForm.elements[name]) registerForm.elements[name].required = isArtisan;
+      });
     };
     if (params.get('role') === 'ARTISAN') registerForm.elements.role.value = 'ARTISAN';
     registerForm.elements.role.addEventListener('change', syncArtisanFields);
@@ -136,6 +160,8 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
   const currency = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
+  const categoryNamesForUi = { MAKEUP: 'Makeup', MEHENDI: 'Mehendi', DRESS: 'Dress & tailoring', FULL_PACKAGE: 'Full package' };
+  const themePrimary = () => getComputedStyle(document.documentElement).getPropertyValue('--button').trim() || '#a67c2e';
 
   const bookingPage = document.querySelector('#booking-page');
   if (bookingPage) {
@@ -157,9 +183,23 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('#booking-category').textContent = categoryNamesForUi[work.category] || work.category;
         document.querySelector('#booking-summary-artisan').textContent = artisan.name;
         document.querySelector('#booking-price').textContent = currency(work.price);
+        const modeNote = document.querySelector('#service-mode-note');
+        if (modeNote) {
+          modeNote.textContent = work.category === 'DRESS'
+            ? 'Tailoring & saree prep: you will send your outfit to the artisan’s address. They return it when the work is complete. Your address is used for pickup and delivery.'
+            : 'Doorstep service: your artist will come to the address below for bridal makeup, mehendi, or styling.';
+        }
         const image = document.querySelector('#booking-image');
         image.src = work.image_url;
         image.hidden = false;
+        apiGet('/api/v1/customers/me').then((profileData) => {
+          const profile = profileData.profile || {};
+          if (profile.address_line1) form.elements.address_line1.value = profile.address_line1;
+          if (profile.address_line2) form.elements.address_line2.value = profile.address_line2;
+          if (profile.city) form.elements.address_city.value = profile.city;
+          if (profile.state) form.elements.address_state.value = profile.state;
+          if (profile.pincode) form.elements.pincode.value = profile.pincode;
+        }).catch(() => {});
         form.addEventListener('submit', async (event) => {
           event.preventDefault();
           const formData = new FormData(form);
@@ -170,7 +210,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/api/v1/bookings', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem(tokenKey) || ''}` },
-              body: JSON.stringify({ work_id: workId, date: formData.get('date'), time: formData.get('time'), notes: formData.get('notes') }),
+              body: JSON.stringify({
+                work_id: workId,
+                date: formData.get('date'),
+                time: formData.get('time'),
+                notes: formData.get('notes'),
+                address_line1: formData.get('address_line1'),
+                address_line2: formData.get('address_line2'),
+                address_city: formData.get('address_city'),
+                address_state: formData.get('address_state'),
+                pincode: formData.get('pincode'),
+              }),
             });
             const payload = await response.json();
             if (!response.ok) throw new Error(payload.error?.message || 'Unable to submit this booking.');
@@ -198,8 +248,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('#checkout-artisan').textContent = `${booking.artisan_name} · ${booking.artisan_city || 'India'} · @${booking.artisan_username}`;
         document.querySelector('#checkout-work').textContent = `${booking.work_title} · ${categoryNamesForUi[booking.category] || booking.category}`;
         document.querySelector('#checkout-schedule').textContent = `${booking.date} at ${booking.time}`;
+        const address = booking.service_address;
+        if (address) {
+          document.querySelector('#checkout-address').textContent = `${address.line1}${address.line2 ? `, ${address.line2}` : ''}, ${address.city}, ${address.state} ${address.pincode}`;
+        }
+        document.querySelector('#checkout-service-mode').textContent = booking.service_mode === 'MAIL_IN'
+          ? 'Mail-in tailoring: send your outfit to the artisan; they will ship it back after completion.'
+          : 'Doorstep service at the address above.';
         document.querySelector('#checkout-line-title').textContent = booking.work_title;
         document.querySelector('#checkout-line-price').textContent = currency(booking.amount);
+        document.querySelector('#checkout-platform-fee').textContent = currency(booking.platform_fee);
+        document.querySelector('#checkout-artisan-share').textContent = currency(booking.artisan_payout);
         document.querySelector('#checkout-total').textContent = currency(booking.amount);
         const payButton = document.querySelector('#pay-button');
         payButton.disabled = booking.payment_status === 'PAID';
@@ -227,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 description: booking.work_title,
                 order_id: orderPayload.data.order_id,
                 prefill: { name: user?.name || '', email: user?.email || '' },
-                theme: { color: '#6e2142' },
+                theme: { color: themePrimary() },
                 handler: async (paymentResult) => {
                   try {
                     const verifyResponse = await fetch(`/api/v1/bookings/${encodeURIComponent(booking.id)}/payment/verify`, {
@@ -262,8 +321,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  const categoryNamesForUi = { MAKEUP: 'Makeup', MEHENDI: 'Mehendi', DRESS: 'Dress', FULL_PACKAGE: 'Full package' };
   const serviceGroups = document.querySelector('#service-groups');
+  const customerAddressForm = document.querySelector('#customer-address-form');
+  if (customerAddressForm) {
+    apiGet('/api/v1/customers/me').then((data) => {
+      const profile = data.profile || {};
+      customerAddressForm.elements.phone.value = profile.phone || '';
+      customerAddressForm.elements.address_line1.value = profile.address_line1 || '';
+      customerAddressForm.elements.address_line2.value = profile.address_line2 || '';
+      customerAddressForm.elements.address_city.value = profile.city || '';
+      customerAddressForm.elements.address_state.value = profile.state || '';
+      customerAddressForm.elements.pincode.value = profile.pincode || '';
+    }).catch(() => {});
+    customerAddressForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = new FormData(customerAddressForm);
+      const messageEl = document.querySelector('#customer-address-message');
+      messageEl.textContent = 'Saving…';
+      const response = await fetch('/api/v1/customers/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem(tokenKey) || ''}` },
+        body: JSON.stringify(Object.fromEntries(form.entries())),
+      });
+      const payload = await response.json();
+      messageEl.textContent = response.ok ? 'Doorstep address saved.' : (payload.error?.message || 'Unable to save address.');
+    });
+  }
   if (serviceGroups) {
     let artisans = [];
     const categoryNames = { MAKEUP: 'Makeup', MEHENDI: 'Mehendi', DRESS: 'Dress', FULL_PACKAGE: 'Full package' };
@@ -306,9 +389,32 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelector('#artisan-orders').textContent = data.metrics.total_orders;
       document.querySelector('#artisan-earnings').textContent = currency(data.payments.available_balance);
       document.querySelector('#artisan-pending').textContent = currency(data.payments.pending_balance);
-      document.querySelector('#artisan-orders-list').innerHTML = data.orders.map((order) => `<div class="table-row"><div><strong>${escapeHtml(order.service)}</strong><small>${escapeHtml(order.customer)} · ${escapeHtml(order.date)}</small></div><span class="status status-${escapeHtml(order.status.toLowerCase())}">${escapeHtml(order.status)}</span><strong>${currency(order.amount)}</strong></div>`).join('') || '<p>No orders yet.</p>';
+      document.querySelector('#artisan-orders-list').innerHTML = data.orders.map((order) => `<div class="table-row"><div><strong>${escapeHtml(order.service)}</strong><small>${escapeHtml(order.customer)} · ${escapeHtml(order.date)} · ${escapeHtml(order.service_address || '')}</small></div><span class="status status-${escapeHtml(order.status.toLowerCase())}">${escapeHtml(order.status)}</span><strong>${currency(order.artisan_payout || order.amount)}</strong></div>`).join('') || '<p>No orders yet.</p>';
+      const notificationsEl = document.querySelector('#artisan-notifications');
+      if (notificationsEl) {
+        notificationsEl.innerHTML = (data.notifications || []).length
+          ? data.notifications.map((note) => `<article class="notification-item ${note.is_read ? '' : 'unread'}"><strong>${escapeHtml(note.title)}</strong><p>${escapeHtml(note.message)}</p></article>`).join('')
+          : '<p class="empty-state">No notifications yet. You will be alerted when a customer books or pays.</p>';
+      }
+      const payout = data.payments?.payout_account;
+      const payoutForm = document.querySelector('#payout-form');
+      if (payoutForm && payout?.configured) {
+        payoutForm.elements.account_holder_name.value = payout.account_holder_name || '';
+        payoutForm.elements.ifsc_code.value = payout.ifsc_code || '';
+      }
       renderPortfolio(data.portfolio);
     }).catch((error) => { document.querySelector('#artisan-error').textContent = error.message; });
+    document.querySelector('#payout-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = new FormData(event.currentTarget);
+      const response = await fetch('/api/v1/artisan/payout-profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem(tokenKey) || ''}` },
+        body: JSON.stringify(Object.fromEntries(form.entries())),
+      });
+      const payload = await response.json();
+      document.querySelector('#payout-message').textContent = response.ok ? payload.message : (payload.error?.message || 'Unable to save bank details.');
+    });
     const renderPortfolio = (items) => {
       const grid = document.querySelector('#portfolio-grid');
       grid.innerHTML = items.length ? items.map((item) => `<figure class="work-item"><img src="${escapeHtml(item.url)}" alt="${escapeHtml(item.caption || 'Portfolio work')}"><figcaption>${escapeHtml(item.caption || 'Portfolio work')}</figcaption></figure>`).join('') : '<p class="empty-state">Your portfolio is ready for its first piece.</p>';

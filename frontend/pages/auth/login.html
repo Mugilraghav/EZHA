@@ -46,6 +46,12 @@
             <label>Sign in as<select name="role" id="login-role" required><option value="CUSTOMER">Customer</option><option value="ARTISAN">Artisan</option><option value="ADMIN">Admin</option></select></label>
             <label>Username or email<input name="username" id="login-username" autocomplete="username" required /></label>
             <label>Password<input name="password" type="password" autocomplete="current-password" required /></label>
+            <div class="artisan-fields" id="artisan-payout-login" hidden>
+              <p style="font-size:.88rem;color:var(--muted)">Artisans: add or update the bank account for your 85% payout share.</p>
+              <label>Account holder name<input name="account_holder_name" autocomplete="name" /></label>
+              <label>Bank account number<input name="account_number" inputmode="numeric" pattern="[0-9]{9,18}" /></label>
+              <label>IFSC code<input name="ifsc_code" maxlength="11" placeholder="HDFC0001234" /></label>
+            </div>
             <div class="auth-message" id="auth-message" role="status" aria-live="polite"></div>
             <button class="btn btn-primary" type="submit">Sign in</button>
           </form>

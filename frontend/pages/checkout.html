@@ -12,7 +12,8 @@
     <link rel="stylesheet" href="/static/css/components.css" />
     <link rel="stylesheet" href="/static/css/responsive.css" />
     <style>
-      body { background: #fffaf8; }
+      body { background: transparent; }
+      .checkout-card, .pay-card { background: var(--surface); }
       .checkout-page { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 28px; padding: 64px 0 90px; }
       .checkout-card, .pay-card { background: #fff; border: 1px solid var(--border); border-radius: 24px; padding: 24px; box-shadow: 0 12px 30px rgba(36,33,36,0.04); }
       .payment-methods { display: grid; gap: 12px; margin-top: 18px; }
@@ -46,7 +47,7 @@
         <span class="eyebrow">Checkout</span>
         <h1 style="margin-top: 16px; font-size: clamp(2.2rem, 4vw, 3.3rem);">Booking summary</h1>
         <p id="checkout-message" role="status">Loading your booking…</p>
-        <div style="margin-top:24px"><h3>Artisan</h3><p id="checkout-artisan">—</p><h3 style="margin-top:18px">Selected work</h3><p id="checkout-work">—</p><p id="checkout-schedule"></p></div>
+        <div style="margin-top:24px"><h3>Artisan</h3><p id="checkout-artisan">—</p><h3 style="margin-top:18px">Selected work</h3><p id="checkout-work">—</p><p id="checkout-schedule"></p><h3 style="margin-top:18px">Service address</h3><p id="checkout-address">—</p><p id="checkout-service-mode" style="color:var(--muted);margin-top:8px"></p></div>
         <div class="payment-methods" style="margin-top:22px"><div class="method"><div><strong>Online payment</strong><div style="color:var(--muted)">UPI, cards and net banking through Razorpay Checkout.</div></div><span>Secure</span></div></div>
       </section>
 
@@ -54,6 +55,8 @@
         <span class="eyebrow">Order summary</span>
         <div class="order-list" style="margin-top: 18px;">
           <div class="summary-line"><span id="checkout-line-title">Selected work</span><span id="checkout-line-price">—</span></div>
+          <div class="summary-line"><span>EZHA service fee (15%)</span><span id="checkout-platform-fee">—</span></div>
+          <div class="summary-line"><span>Artisan receives (85%)</span><span id="checkout-artisan-share">—</span></div>
           <div class="summary-line total"><span>Amount due</span><span id="checkout-total">—</span></div>
         </div>
         <p style="margin-top:18px" id="payment-status">Your booking request is saved as pending. Payment is required to confirm it.</p>

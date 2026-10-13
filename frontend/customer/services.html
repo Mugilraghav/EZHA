@@ -19,7 +19,9 @@
       .service-group { margin-top:34px; }
       .service-group h2 { font-size:1.8rem; margin-bottom:18px; }
       .artisan-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
-      .artisan-card { background:#fff; border:1px solid var(--border); border-radius:8px; padding:20px; }
+      .artisan-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:20px; }
+      .customer-main h1, .customer-main h2, .customer-main p { color: var(--text); }
+      .customer-top p { color: var(--muted); }
       .artisan-heading { display:flex; align-items:start; justify-content:space-between; gap:12px; padding-bottom:16px; border-bottom:1px solid var(--border); }
       .artisan-heading h3 { margin:4px 0; font-size:1.2rem; }
       .artisan-id { color:var(--muted); font-size:.78rem; overflow-wrap:anywhere; }
@@ -40,7 +42,21 @@
   <body data-requires-role="CUSTOMER">
     <header class="site-header"><div class="container navbar"><a class="brand" href="/" aria-label="EZHA home"><img class="brand-logo" src="/static/assets/ezha-logo.png" alt="EZHA | The Signature of Success" /></a><nav class="customer-nav"><a href="/customer/services">Discover</a><a href="/explore">Artists</a><button class="btn btn-secondary" type="button" data-logout>Sign out</button></nav></div></header>
     <main class="container customer-main">
-      <div class="customer-top"><div><span class="eyebrow">Customer space</span><h1>Find your next favorite.</h1><p>Explore services by craft, then book with an artist who fits your plans.</p></div><a href="/explore" class="btn btn-secondary">Browse artists</a></div>
+      <div class="customer-top"><div><span class="eyebrow">Customer space</span><h1>Beauty at your doorstep.</h1><p>Book bridal makeup, mehendi, and styling at home. Tailoring & saree work: send your outfit to the artisan and receive it back when ready.</p></div><a href="/explore" class="btn btn-secondary">Browse artists</a></div>
+      <section class="artisan-card" id="customer-address-panel" style="margin-bottom:28px">
+        <h2 style="margin-top:0;font-size:1.35rem">Your service address</h2>
+        <p>Artists travel to this address for doorstep services.</p>
+        <form id="customer-address-form" class="service-tools" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:16px">
+          <label>Mobile<input name="phone" inputmode="tel" /></label>
+          <label>PIN code<input name="pincode" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required /></label>
+          <label style="grid-column:1/-1">Street / house no.<input name="address_line1" required /></label>
+          <label>Area<input name="address_line2" /></label>
+          <label>City<input name="address_city" required /></label>
+          <label>State<input name="address_state" required /></label>
+          <button class="btn btn-primary" type="submit" style="grid-column:1/-1">Save address</button>
+        </form>
+        <p id="customer-address-message" role="status" style="color:var(--primary);margin-top:10px"></p>
+      </section>
       <div class="service-tools"><input id="service-search" type="search" placeholder="Search artisans and their work" aria-label="Search artisans and works" /><select id="category-filter" aria-label="Filter by work category"><option value="">All categories</option><option value="MAKEUP">Makeup</option><option value="MEHENDI">Mehendi</option><option value="DRESS">Dress</option><option value="FULL_PACKAGE">Full package</option></select><select id="city-filter" aria-label="Filter by city"><option value="">All cities</option><option>Bengaluru</option><option>Chennai</option><option>Delhi</option><option>Mumbai</option></select></div>
       <div id="service-groups" aria-live="polite"><p class="empty-state">Loading artisans and works…</p></div>
     </main>
