@@ -1,21 +1,61 @@
 :root {
-  --primary: #1a5c4a;
-  --primary-dark: #0f3d32;
-  --secondary: #2d7a62;
-  --accent: #c9a227;
-  --accent-deep: #8b5a2b;
-  --button: #a67c2e;
-  --button-dark: #7a5a1f;
-  --accent-soft: #f3e2b8;
-  --background: #0f3d32;
-  --background-soft: #134e3f;
-  --surface: #f8f1e3;
-  --surface-strong: #efe4cf;
-  --text: #1f1a14;
-  --muted: #5c5348;
-  --border: #d4c4a0;
-  --shadow: 0 20px 40px rgba(15, 61, 50, 0.22);
+  /* Emerald scale */
+  --color-emerald-950: #032a24;
+  --color-emerald-900: #041f1b;
+  --color-emerald-850: #063b32;
+  --color-emerald-800: #07483c;
+  --color-emerald-700: #0b5144;
+  --color-emerald-600: #0f6656;
+  --color-emerald-500: #147a67;
+
+  /* Gold scale */
+  --color-gold-900: #8c6a32;
+  --color-gold-700: #9a7438;
+  --color-gold-500: #c9a227;
+  --color-gold-400: #d4af37;
+  --color-gold-300: #e1c45a;
+
+  /* Bronze */
+  --color-bronze-700: #765421;
+  --color-bronze-500: #8c6a32;
+
+  /* Ivory / cream */
+  --color-ivory: #f7f0df;
+  --color-cream: #efe4cb;
+  --color-cream-soft: #fff8e8;
+
+  /* Semantic aliases */
+  --primary: var(--color-emerald-700);
+  --primary-dark: var(--color-emerald-900);
+  --secondary: var(--color-emerald-600);
+  --accent: var(--color-gold-500);
+  --accent-deep: var(--color-bronze-700);
+  --button: var(--color-gold-700);
+  --button-dark: var(--color-bronze-700);
+
+  --background: var(--color-emerald-850);
+  --background-deep: var(--color-emerald-950);
+  --surface: rgba(10, 70, 60, 0.72);
+  --surface-elevated: rgba(11, 81, 68, 0.82);
+  --surface-strong: rgba(7, 72, 60, 0.9);
+
+  --text: var(--color-ivory);
+  --text-secondary: #d7cdb5;
+  --muted: #afa58e;
+  --border: rgba(212, 175, 55, 0.22);
+  --border-gold: rgba(212, 175, 55, 0.35);
+
+  --shadow-royal: 0 24px 48px rgba(3, 42, 36, 0.45);
+  --shadow-soft: 0 12px 32px rgba(3, 42, 36, 0.28);
+  --glow-gold: 0 0 24px rgba(201, 162, 39, 0.22);
+  --radius-premium: 20px;
   --radius: 24px;
+
+  --transition-luxury: 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-fast: 0.32s ease-out;
+
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
 }
 
 * {
@@ -30,16 +70,39 @@ html {
   scroll-behavior: smooth;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 body {
   margin: 0;
-  font-family: "Inter", sans-serif;
-  background:
-    radial-gradient(circle at 12% 8%, rgba(201, 162, 39, 0.12), transparent 28%),
-    radial-gradient(circle at 88% 4%, rgba(201, 162, 39, 0.08), transparent 24%),
-    linear-gradient(165deg, var(--background) 0%, var(--background-soft) 42%, #0b2f27 100%);
+  font-family: var(--font-body);
   color: var(--text);
   line-height: 1.6;
   min-height: 100vh;
+  background-color: var(--color-emerald-850);
+  background-image:
+    radial-gradient(ellipse 80% 55% at 15% 0%, rgba(201, 162, 39, 0.07), transparent 55%),
+    radial-gradient(ellipse 60% 45% at 90% 10%, rgba(212, 175, 55, 0.05), transparent 50%),
+    linear-gradient(165deg, var(--color-emerald-850) 0%, var(--color-emerald-900) 48%, var(--color-emerald-950) 100%);
+  background-attachment: fixed;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23d4af37' stroke-width='0.5'%3E%3Cpath d='M30 0v60M0 30h60M15 15l30 30M45 15L15 45'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
 }
 
 a {
@@ -76,15 +139,15 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--accent-deep);
-  background: rgba(201, 162, 39, 0.14);
-  border: 1px solid rgba(139, 90, 43, 0.22);
+  color: var(--color-gold-300);
+  background: rgba(201, 162, 39, 0.1);
+  border: 1px solid var(--border-gold);
   border-radius: 999px;
-  padding: 0.6rem 1rem;
+  padding: 0.55rem 1rem;
 }
 
 h1,
@@ -92,16 +155,22 @@ h2,
 h3,
 h4 {
   margin: 0 0 18px;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--text);
 }
 
 h1,
 h2 {
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-display);
 }
 
 p {
   margin: 0;
-  color: var(--muted);
+  color: var(--text-secondary);
+}
+
+:focus-visible {
+  outline: 2px solid rgba(212, 175, 55, 0.65);
+  outline-offset: 3px;
 }
