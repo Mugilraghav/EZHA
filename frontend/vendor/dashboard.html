@@ -97,7 +97,7 @@
           <form class="work-form" id="portfolio-form">
             <label>Work title<input type="text" name="title" maxlength="160" required /></label>
             <label>Category<select name="category" required><option value="MAKEUP">Makeup</option><option value="MEHENDI">Mehendi</option><option value="DRESS">Dress</option><option value="FULL_PACKAGE">Full package</option></select></label>
-            <label>Price (INR)<input type="number" name="price" min="1" step="1" required /></label>
+            <label>Price in rupees<input type="text" name="price" inputmode="numeric" pattern="[0-9]+" maxlength="9" placeholder="For example, 4500" title="Enter digits only, with no currency symbol or commas." autocomplete="off" required /></label>
             <label>Image<input type="file" name="file" accept="image/jpeg,image/png,image/webp" required /></label>
             <label>Caption<input type="text" name="caption" maxlength="160" placeholder="Bridal look, occasion styling…" /></label>
             <button class="btn btn-primary" type="submit">Upload work</button>

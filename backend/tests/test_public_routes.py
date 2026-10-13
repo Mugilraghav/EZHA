@@ -463,6 +463,9 @@ def test_role_portal_pages_and_artisan_dashboard_access():
     for route in ("/login", "/register", "/customer/services", "/artisan/dashboard"):
         assert client.get(route).status_code == 200
 
+    artisan_page = client.get("/artisan/dashboard")
+    assert b'type="text" name="price" inputmode="numeric"' in artisan_page.data
+
     customer_login = client.post(
         "/api/v1/auth/login",
         json={"email": "customer@demo.ezha", "password": "demo123", "role": "CUSTOMER"},
