@@ -65,8 +65,11 @@ def initialize_database(app: Flask) -> None:
             if column_name not in booking_columns:
                 connection.execute(text(statement))
     booking_columns = {column["name"] for column in inspect(engine).get_columns("bookings")}
+    acceptance_deadline_type = (
+        "TIMESTAMP WITH TIME ZONE" if backend in {"postgres", "postgresql"} else "DATETIME"
+    )
     booking_extra = {
-        "acceptance_deadline": "ALTER TABLE bookings ADD COLUMN acceptance_deadline DATETIME",
+        "acceptance_deadline": f"ALTER TABLE bookings ADD COLUMN acceptance_deadline {acceptance_deadline_type}",
         "artisan_decision": "ALTER TABLE bookings ADD COLUMN artisan_decision VARCHAR(24) NOT NULL DEFAULT 'PENDING'",
     }
     with engine.begin() as connection:
@@ -84,10 +87,11 @@ def initialize_database(app: Flask) -> None:
             if column_name not in artisan_columns:
                 connection.execute(text(statement))
     user_columns = {column["name"] for column in inspect(engine).get_columns("users")}
+    bool_default = "FALSE" if backend in {"postgres", "postgresql"} else "0"
     user_alters = {
         "phone": "ALTER TABLE users ADD COLUMN phone VARCHAR(20) NOT NULL DEFAULT ''",
-        "email_verified": "ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT 0",
-        "phone_verified": "ALTER TABLE users ADD COLUMN phone_verified BOOLEAN NOT NULL DEFAULT 0",
+        "email_verified": f"ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT {bool_default}",
+        "phone_verified": f"ALTER TABLE users ADD COLUMN phone_verified BOOLEAN NOT NULL DEFAULT {bool_default}",
     }
     with engine.begin() as connection:
         for column_name, statement in user_alters.items():
