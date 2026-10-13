@@ -5,7 +5,7 @@ from .config import Config
 from .auth import auth_service
 from .database import initialize_database
 from .models.catalog import get_demo_catalog
-from .routes import admin_bp, artisan_bp, auth_bp, customers_bp, public_bp, vendors_bp
+from .routes import admin_bp, artisan_bp, auth_bp, customers_bp, public_api_bp, public_bp, vendors_bp
 
 
 def create_app(config_class=Config):
@@ -26,6 +26,7 @@ def create_app(config_class=Config):
     app.extensions["ezha_portfolio"] = []
     app.extensions["ezha_auth_service"] = auth_service
     app.register_blueprint(public_bp)
+    app.register_blueprint(public_api_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(customers_bp)
     app.register_blueprint(vendors_bp)

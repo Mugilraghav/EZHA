@@ -39,7 +39,7 @@ def customer_services():
 
 @public_bp.get("/explore")
 def explore():
-    return send_from_directory(PAGES_DIR, "explore.html")
+    return redirect("/#vision")
 
 
 @public_bp.get("/category")

@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="EZHA connects customers with verified beauty, bridal, fashion and artisan professionals across India."
+      content="EZHA — India's #1 doorstep beauty platform. Premium bridal, beauty, mehendi and fashion services at your home."
     />
-    <title>EZHA | The Signature of Success</title>
+    <title>EZHA | Premium service at your doorstep</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -18,6 +18,16 @@
     <link rel="stylesheet" href="/static/css/components.css" />
     <link rel="stylesheet" href="/static/css/theme.css" />
     <link rel="stylesheet" href="/static/css/responsive.css" />
+    <style>
+      .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: linear-gradient(135deg, #7f1d1d, #059669); color: #fde68a; font-weight: 800; font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase; box-shadow: 0 0 24px rgba(5, 150, 105, 0.35); }
+      .quote-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 28px; }
+      .quote-card { border: 1px solid var(--border); border-radius: 18px; padding: 22px; background: rgba(255,255,255,0.72); font-style: italic; color: var(--muted); }
+      .quote-card strong { display: block; margin-top: 12px; font-style: normal; color: var(--text); }
+      .vision-panel { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 32px; align-items: center; }
+      .founder-card { display: flex; gap: 20px; align-items: center; margin-top: 36px; padding: 24px; border-radius: 22px; border: 1px solid var(--border); background: var(--surface-elevated); }
+      .founder-card img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(201,162,39,0.45); }
+      @media (max-width: 900px) { .quote-grid, .vision-panel { grid-template-columns: 1fr; } }
+    </style>
   </head>
   <body>
     <header class="site-header">
@@ -27,15 +37,14 @@
         </a>
 
         <nav class="nav-links" aria-label="Main navigation">
-          <a href="#explore">Explore</a>
-          <a href="#categories">Categories</a>
+          <a href="#vision">Explore</a>
+          <a href="#categories">Services</a>
           <a href="#how-it-works">How It Works</a>
           <a href="#artists">Become an Artist</a>
           <a href="#about">About</a>
         </nav>
 
         <div class="nav-actions">
-          <button class="btn btn-ghost" type="button" data-focus-search>Search</button>
           <a class="btn btn-secondary" id="header-login" href="/login">Login</a>
           <a class="btn btn-primary" id="header-register" href="/register">Get Started</a>
           <a class="btn btn-secondary" id="header-portal" href="/login" hidden>My EZHA</a>
@@ -50,43 +59,26 @@
         <div class="hero-particles" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
         <div class="container hero-grid">
           <div class="hero-copy reveal">
-            <span class="eyebrow">Royal doorstep beauty</span>
-            <h1>Your Style. Your Artist. Your Signature.</h1>
+            <span class="hero-badge">#1 doorstep beauty platform in India</span>
+            <span class="eyebrow" style="margin-top: 14px; display: inline-block">EZHA vision</span>
+            <h1>Premium service at your doorstep.</h1>
             <p class="lead">
-              Discover trusted beauty, bridal, fashion and artisan professionals — and book the
-              service your way.
+              We are the first to deliver every beauty-related service to your home — bridal makeup, mehendi,
+              styling, tailoring and more — with verified artisans and palace-grade care.
             </p>
-
-            <form class="hero-search" id="landing-search-form" aria-label="Search for services and locations">
-              <label class="field" for="service-search">
-                <span>What service are you looking for?</span>
-                <input id="service-search" type="text" placeholder="Bridal makeup, mehendi, tailoring..." />
-              </label>
-              <label class="field" for="location-search">
-                <span>Where do you need it?</span>
-                <input id="location-search" type="text" placeholder="Chennai, Bengaluru, Mumbai..." />
-              </label>
-              <button class="btn btn-primary" type="submit">Find My Artist</button>
-            </form>
-
-            <div class="trust-points" aria-label="Trust indicators">
-              <span><strong>4.9/5</strong> average rating</span>
-              <span><strong>10k+</strong> bookings</span>
-              <span><strong>800+</strong> verified artists</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px;">
+              <a class="btn btn-primary" href="#vision">Explore our vision</a>
+              <a class="btn btn-secondary" href="#categories">Browse services</a>
             </div>
           </div>
 
-          <div class="hero-visual reveal" aria-label="Featured artist preview">
+          <div class="hero-visual reveal" aria-label="EZHA doorstep beauty">
             <div class="image-card">
               <img
+                id="landing-hero-image"
                 src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80"
-                alt="Bridal makeup artist preparing a client"
+                alt="EZHA premium doorstep beauty experience"
               />
-            </div>
-            <div class="float-card">
-              <span class="rating-chip">★ 4.9</span>
-              <h3>Ananya Bridal Studio</h3>
-              <p>Bridal Makeup • Chennai</p>
             </div>
           </div>
         </div>
@@ -96,10 +88,11 @@
         <div class="container">
           <div class="section-heading">
             <div>
-              <span class="eyebrow">Explore by category</span>
-              <h2>Popular services for every occasion</h2>
+              <span class="eyebrow">What we provide</span>
+              <h2>Services for every celebration</h2>
+              <p>One platform for every beauty and craft need — booked once, delivered where you are.</p>
             </div>
-            <a href="/customer/services" class="btn btn-secondary">Browse all</a>
+            <a href="/customer/services" class="btn btn-secondary">Book a service</a>
           </div>
 
           <div class="royal-divider" aria-hidden="true">Palace of craft</div>
@@ -107,7 +100,7 @@
             <article class="category-card">
               <div class="category-icon">💍</div>
               <h3>Bridal</h3>
-              <p>Makeup, hair styling, mehendi, saree draping and full wedding packages.</p>
+              <p>Makeup, hair styling, mehendi, saree draping and full wedding packages at home.</p>
             </article>
             <article class="category-card">
               <div class="category-icon">✨</div>
@@ -122,93 +115,60 @@
             <article class="category-card">
               <div class="category-icon">🧵</div>
               <h3>Tailoring</h3>
-              <p>Custom blouse, dress stitching and alteration for your perfect fit.</p>
+              <p>Custom blouse, dress stitching and alteration — mail-in or doorstep consultation.</p>
             </article>
           </div>
         </div>
       </section>
 
-      <section id="explore" class="section section-alt">
-        <div class="container">
-          <div class="section-heading">
-            <div>
-              <span class="eyebrow">Featured artists</span>
-              <h2>Handpicked professionals for signature experiences</h2>
+      <section id="vision" class="section section-alt">
+        <div class="container vision-panel">
+          <div>
+            <span class="eyebrow">Vision &amp; achievements</span>
+            <h2>India's first full-stack doorstep beauty network</h2>
+            <p>
+              EZHA was built so you never compromise on quality or convenience. From the first bridal trial to the
+              last stitch on your blouse, every service comes to you — verified, insured, and worthy of your signature moment.
+            </p>
+            <div class="quote-grid">
+              <blockquote class="quote-card">“Luxury is not a venue — it is showing up for you, wherever you are.”<strong>— EZHA promise</strong></blockquote>
+              <blockquote class="quote-card">“We don't just book artists; we deliver trust at your threshold.”<strong>— Customer charter</strong></blockquote>
+              <blockquote class="quote-card">“Every artisan on EZHA earns dignity, visibility, and fair payout.”<strong>— Artisan pledge</strong></blockquote>
             </div>
-            <a href="/customer/services" class="btn btn-secondary">View all artists</a>
+            <div class="quote-grid" style="margin-top: 14px">
+              <blockquote class="quote-card">“Your home becomes the salon; your calendar becomes lighter.”<strong>— Doorstep manifesto</strong></blockquote>
+              <blockquote class="quote-card">“#1 because we showed up first — and we keep showing up.”<strong>— EZHA platform</strong></blockquote>
+              <blockquote class="quote-card">“Premium is personal. Personal is EZHA.”<strong>— Brand belief</strong></blockquote>
+            </div>
+            <div class="founder-card">
+              <img id="founder-image" src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80" alt="EZHA founder" />
+              <div>
+                <span class="eyebrow">Founder</span>
+                <h3 id="founder-name" style="margin: 8px 0 6px">Mugilraghav</h3>
+                <p style="margin: 0; color: var(--muted)">Building India's most trusted doorstep beauty platform — one home, one signature at a time.</p>
+              </div>
+            </div>
           </div>
-
-          <div class="vendor-grid">
-            <article class="vendor-card">
-              <img
-                src="https://images.unsplash.com/photo-1521590832167-7b1d4d2679d8?auto=format&fit=crop&w=900&q=80"
-                alt="Bridal makeup artist portrait"
-              />
-              <div class="vendor-content">
-                <div class="vendor-header">
-                  <h3>Aditi Mehra</h3>
-                  <span class="vendor-badge">✓ Verified</span>
-                </div>
-                <p>Bridal Makeup • Bengaluru</p>
-                <div class="vendor-meta">
-                  <span>★ 4.9</span>
-                  <span>108 reviews</span>
-                  <span>9 years</span>
-                </div>
-                <div class="vendor-price">Starting at ₹8,000</div>
-                <div class="card-footer">
-                  <span class="rating-inline">⭐ 4.9</span>
-                  <a class="btn btn-primary" href="/customer/services?service_id=svc_001">Book now</a>
-                </div>
-              </div>
+          <div class="trust-grid">
+            <article class="trust-card">
+              <div class="trust-icon">🏆</div>
+              <h3>#1 in doorstep delivery</h3>
+              <p>The first platform to unify every beauty-related service for at-home delivery across India.</p>
             </article>
-
-            <article class="vendor-card">
-              <img
-                src="https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=900&q=80"
-                alt="Mehendi artist portrait"
-              />
-              <div class="vendor-content">
-                <div class="vendor-header">
-                  <h3>Naina Studio</h3>
-                  <span class="vendor-badge">✓ Verified</span>
-                </div>
-                <p>Fashion Styling • Delhi</p>
-                <div class="vendor-meta">
-                  <span>★ 4.8</span>
-                  <span>92 reviews</span>
-                  <span>7 years</span>
-                </div>
-                <div class="vendor-price">Starting at ₹2,500</div>
-                <div class="card-footer">
-                  <span class="rating-inline">⭐ 4.8</span>
-                  <a class="btn btn-primary" href="/customer/services?service_id=svc_002">Book now</a>
-                </div>
-              </div>
+            <article class="trust-card">
+              <div class="trust-icon">🛡️</div>
+              <h3>Verified artisans only</h3>
+              <p>Background checks, portfolio review, and ongoing quality audits.</p>
             </article>
-
-            <article class="vendor-card">
-              <img
-                src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80"
-                alt="Fashion designer portrait"
-              />
-              <div class="vendor-content">
-                <div class="vendor-header">
-                  <h3>Saffron Atelier</h3>
-                  <span class="vendor-badge">✓ Verified</span>
-                </div>
-                <p>Bridal Wear • Mumbai</p>
-                <div class="vendor-meta">
-                  <span>★ 4.9</span>
-                  <span>140 reviews</span>
-                  <span>12 years</span>
-                </div>
-                <div class="vendor-price">Starting at ₹15,000</div>
-                <div class="card-footer">
-                  <span class="rating-inline">⭐ 4.9</span>
-                  <a class="btn btn-primary" href="/customer/services?service_id=svc_003">Book now</a>
-                </div>
-              </div>
+            <article class="trust-card">
+              <div class="trust-icon">💳</div>
+              <h3>Transparent pricing</h3>
+              <p>Secure payments with clear breakdowns — no surprise salon markups.</p>
+            </article>
+            <article class="trust-card">
+              <div class="trust-icon">📍</div>
+              <h3>Pan-India ambition</h3>
+              <p>Starting with metros and expanding to every city that celebrates in style.</p>
             </article>
           </div>
         </div>
@@ -219,25 +179,25 @@
           <div class="section-heading">
             <div>
               <span class="eyebrow">How EZHA works</span>
-              <h2>From discovery to booking, made effortless</h2>
+              <h2>From discovery to doorstep, made effortless</h2>
             </div>
           </div>
 
           <div class="steps-grid">
             <article class="step-card">
               <div class="step-number">1</div>
-              <h3>Discover</h3>
-              <p>Search by service, category, vibe or city and shortlist the right artist for your moment.</p>
+              <h3>Choose your service</h3>
+              <p>Pick bridal, beauty, mehendi or tailoring — all in one place.</p>
             </article>
             <article class="step-card">
               <div class="step-number">2</div>
-              <h3>Customize</h3>
-              <p>Build your perfect package with add-ons, colors, timings, and inspiration images.</p>
+              <h3>Share your address</h3>
+              <p>Tell us where you need the experience; we route the right verified artisan.</p>
             </article>
             <article class="step-card">
               <div class="step-number">3</div>
-              <h3>Book with confidence</h3>
-              <p>Choose a slot, pay securely, receive confirmation and track the service in real time.</p>
+              <h3>Enjoy at home</h3>
+              <p>Pay securely, track your booking, and rate the experience that came to you.</p>
             </article>
           </div>
         </div>
@@ -252,36 +212,13 @@
             </div>
           </div>
 
-          <div class="trust-grid">
-            <article class="trust-card">
-              <div class="trust-icon">✓</div>
-              <h3>Verified professionals</h3>
-              <p>All artists are reviewed and verified before they appear publicly.</p>
-            </article>
-            <article class="trust-card">
-              <div class="trust-icon">💬</div>
-              <h3>Clear communication</h3>
-              <p>Discuss your vision, requirements and service details before booking.</p>
-            </article>
-            <article class="trust-card">
-              <div class="trust-icon">💳</div>
-              <h3>Secure payments</h3>
-              <p>Transparent pricing and secure checkout designed for modern Indian bookings.</p>
-            </article>
-            <article class="trust-card">
-              <div class="trust-icon">⭐</div>
-              <h3>Verified reviews</h3>
-              <p>Ratings and feedback help you choose artists with confidence.</p>
-            </article>
-          </div>
-
           <div class="stats-grid">
             <div class="stat-box">
-              <strong>10k+</strong>
+              <strong data-stat-bookings>—</strong>
               <span>Bookings completed</span>
             </div>
             <div class="stat-box">
-              <strong>800+</strong>
+              <strong data-stat-artists>—</strong>
               <span>Verified artists</span>
             </div>
             <div class="stat-box">
@@ -316,18 +253,17 @@
               <img class="brand-logo" src="/static/assets/ezha-logo.png" alt="EZHA | The Signature of Success" />
             </a>
             <p>
-              Your style is personal. Your artist should be too. Discover trusted beauty, bridal and
-              fashion professionals across India.
+              Premium service at your doorstep. India's first platform delivering every beauty-related service to your home.
             </p>
           </div>
 
           <div class="footer-col">
-            <h4>Explore</h4>
+            <h4>Services</h4>
             <ul>
-              <li>Beauty</li>
-              <li>Bridal</li>
-              <li>Mehendi</li>
-              <li>Aari</li>
+              <li><a href="#categories">Beauty</a></li>
+              <li><a href="#categories">Bridal</a></li>
+              <li><a href="#categories">Mehendi</a></li>
+              <li><a href="#categories">Tailoring</a></li>
             </ul>
           </div>
 
@@ -336,39 +272,35 @@
             <ul>
               <li><a href="/register?role=ARTISAN">Become an Artist</a></li>
               <li><a href="/login?role=ARTISAN">Artist Login</a></li>
-              <li>Guidelines</li>
             </ul>
           </div>
 
           <div class="footer-col">
             <h4>Support</h4>
             <ul>
-              <li>Help Center</li>
-              <li>Contact</li>
-              <li>Cancellation</li>
-              <li>Refunds</li>
+              <li><a id="footer-support-email" href="mailto:vimala8121983@gmail.com">vimala8121983@gmail.com</a></li>
             </ul>
           </div>
 
           <div class="footer-col">
             <h4>Company</h4>
             <ul>
-              <li>About</li>
+              <li><a href="#vision">About</a></li>
               <li>Terms</li>
               <li>Privacy</li>
-              <li>Grievance</li>
             </ul>
           </div>
         </div>
 
         <div class="footer-bottom">
           <span>© 2026 EZHA. All rights reserved.</span>
-          <span>Designed for premium Indian experiences.</span>
+          <span>Founded by Mugilraghav · Designed for premium Indian experiences.</span>
         </div>
       </div>
     </footer>
 
     <script src="/static/js/common.js"></script>
     <script src="/static/js/portal.js"></script>
+    <script src="/static/js/landing.js"></script>
   </body>
 </html>

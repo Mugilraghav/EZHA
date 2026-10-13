@@ -101,7 +101,12 @@ def dashboard():
     return jsonify({
         "success": True,
         "data": {
-            "profile": {"name": claims["name"], "username": claims["username"]},
+            "profile": {
+                "name": claims["name"],
+                "username": claims["username"],
+                "city": profile.city if profile else "",
+                "category": profile.category if profile else "",
+            },
             "orders": orders,
             "payments": {
                 "available_balance": total_earnings,

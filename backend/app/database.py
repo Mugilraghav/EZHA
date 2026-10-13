@@ -74,6 +74,16 @@ def initialize_database(app: Flask) -> None:
         for column_name, statement in artisan_alters.items():
             if column_name not in artisan_columns:
                 connection.execute(text(statement))
+    user_columns = {column["name"] for column in inspect(engine).get_columns("users")}
+    user_alters = {
+        "phone": "ALTER TABLE users ADD COLUMN phone VARCHAR(20) NOT NULL DEFAULT ''",
+        "email_verified": "ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT 0",
+        "phone_verified": "ALTER TABLE users ADD COLUMN phone_verified BOOLEAN NOT NULL DEFAULT 0",
+    }
+    with engine.begin() as connection:
+        for column_name, statement in user_alters.items():
+            if column_name not in user_columns:
+                connection.execute(text(statement))
     portfolio_columns = {column["name"] for column in inspect(engine).get_columns("portfolio_works")}
     if "storage_provider" not in portfolio_columns:
         with engine.begin() as connection:

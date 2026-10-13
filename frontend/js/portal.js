@@ -32,25 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  document.querySelector('[data-focus-search]')?.addEventListener('click', () => {
-    document.querySelector('#service-search')?.focus();
-  });
-
-  document.querySelector('#landing-search-form')?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const serviceQuery = document.querySelector('#service-search').value.trim();
-    const cityQuery = document.querySelector('#location-search').value.trim();
-    const query = new URLSearchParams();
-    if (serviceQuery) query.set('q', serviceQuery);
-    if (cityQuery) query.set('city', cityQuery);
-    const returnTo = `/customer/services${query.size ? `?${query.toString()}` : ''}`;
-    if (token && user?.role === 'CUSTOMER') {
-      window.location.assign(returnTo);
-    } else {
-      window.location.assign(`/login?role=CUSTOMER&return_to=${encodeURIComponent(returnTo)}`);
-    }
-  });
-
   document.querySelectorAll('[data-logout]').forEach((button) => button.addEventListener('click', () => {
     localStorage.removeItem(tokenKey);
     localStorage.removeItem(userKey);
@@ -62,14 +43,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const roleSelect = loginForm.elements.role;
     const usernameInput = loginForm.elements.username;
-    const artisanPayoutLogin = document.querySelector('#artisan-payout-login');
-    const syncLoginRole = () => {
-      if (artisanPayoutLogin) artisanPayoutLogin.hidden = roleSelect.value !== 'ARTISAN';
-    };
     if (['CUSTOMER', 'ARTISAN', 'ADMIN'].includes(params.get('role'))) roleSelect.value = params.get('role');
     if (params.has('username')) usernameInput.value = params.get('username');
-    roleSelect.addEventListener('change', syncLoginRole);
-    syncLoginRole();
+    document.querySelector('#toggle-forgot')?.addEventListener('click', () => {
+      const panel = document.querySelector('#forgot-panel');
+      if (panel) panel.dataset.open = panel.dataset.open === 'true' ? 'false' : 'true';
+    });
+    document.querySelector('#forgot-send')?.addEventListener('click', async () => {
+      const identifier = document.querySelector('#forgot-identifier')?.value.trim();
+      if (!identifier) return showMessage('Enter your email or mobile number.', true);
+      showMessage('Sending reset code…');
+      try {
+        const response = await fetch('/api/v1/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier }),
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error?.message || 'Unable to send code.');
+        const hint = payload.data?.dev_code ? ` Dev code: ${payload.data.dev_code}` : '';
+        showMessage(`Reset code sent.${hint}`);
+      } catch (error) {
+        showMessage(error.message, true);
+      }
+    });
+    document.querySelector('#forgot-submit')?.addEventListener('click', async () => {
+      const identifier = document.querySelector('#forgot-identifier')?.value.trim();
+      const otp = document.querySelector('#forgot-otp')?.value.trim();
+      const newPassword = document.querySelector('#forgot-password')?.value;
+      showMessage('Updating password…');
+      try {
+        const response = await fetch('/api/v1/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier, otp, new_password: newPassword }),
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error?.message || 'Unable to reset password.');
+        showMessage(payload.message || 'Password updated. Sign in with your new password.');
+      } catch (error) {
+        showMessage(error.message, true);
+      }
+    });
     loginForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const form = new FormData(loginForm);
@@ -84,25 +99,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!response.ok) throw new Error(payload.error?.message || 'Unable to sign in. Check your credentials.');
         localStorage.setItem(tokenKey, payload.data.access_token);
         localStorage.setItem(userKey, JSON.stringify(payload.data.user));
-        if (payload.data.user.role === 'ARTISAN' && form.get('account_number') && form.get('ifsc_code')) {
-          await fetch('/api/v1/artisan/payout-profile', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${payload.data.access_token}` },
-            body: JSON.stringify({
-              account_holder_name: form.get('account_holder_name'),
-              account_number: form.get('account_number'),
-              ifsc_code: form.get('ifsc_code'),
-            }),
-          });
-        }
         const returnTo = params.get('return_to') || '';
         const allowedReturn = {
           CUSTOMER: returnTo.startsWith('/customer/services') ? returnTo : '',
           ARTISAN: returnTo === '/artisan/dashboard' ? returnTo : '',
           ADMIN: returnTo === '/admin/dashboard' ? returnTo : '',
         }[payload.data.user.role];
-        const artisanDest = payload.data.user.role === 'ARTISAN' && form.get('account_number') ? '/artisan/dashboard#payments' : '';
-        window.location.assign(allowedReturn || artisanDest || destination(payload.data.user.role));
+        window.location.assign(allowedReturn || destination(payload.data.user.role));
       } catch (error) {
         showMessage(error.message, true);
       }
@@ -119,14 +122,40 @@ document.addEventListener('DOMContentLoaded', () => {
       const isCustomer = registerForm.elements.role.value === 'CUSTOMER';
       artisanFields.hidden = !isArtisan;
       if (customerAddressFields) customerAddressFields.hidden = !isCustomer;
-      registerForm.elements.city.required = isArtisan;
-      ['account_holder_name', 'account_number', 'ifsc_code'].forEach((name) => {
-        if (registerForm.elements[name]) registerForm.elements[name].required = isArtisan;
-      });
+      if (registerForm.elements.city) registerForm.elements.city.required = isArtisan;
     };
     if (params.get('role') === 'ARTISAN') registerForm.elements.role.value = 'ARTISAN';
     registerForm.elements.role.addEventListener('change', syncArtisanFields);
     syncArtisanFields();
+    registerForm.querySelectorAll('[data-send-otp]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const channel = button.getAttribute('data-send-otp');
+        const destination = channel === 'email'
+          ? registerForm.elements.email.value.trim()
+          : registerForm.elements.phone.value.trim();
+        if (!destination) {
+          showMessage(channel === 'email' ? 'Enter your email first.' : 'Enter your mobile number first.', true);
+          return;
+        }
+        showMessage(`Sending ${channel} code…`);
+        try {
+          const response = await fetch('/api/v1/auth/otp/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channel, destination }),
+          });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error?.message || 'Unable to send code.');
+          if (payload.data?.dev_code) {
+            const field = channel === 'email' ? 'email_otp' : 'phone_otp';
+            if (registerForm.elements[field]) registerForm.elements[field].value = payload.data.dev_code;
+          }
+          showMessage(`Verification code sent to your ${channel}.`);
+        } catch (error) {
+          showMessage(error.message, true);
+        }
+      });
+    });
     registerForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const form = new FormData(registerForm);
@@ -332,6 +361,9 @@ document.addEventListener('DOMContentLoaded', () => {
       customerAddressForm.elements.address_city.value = profile.city || '';
       customerAddressForm.elements.address_state.value = profile.state || '';
       customerAddressForm.elements.pincode.value = profile.pincode || '';
+      if (profile.address_line1 && profile.pincode) {
+        document.querySelector('#customer-address-panel')?.setAttribute('hidden', '');
+      }
     }).catch(() => {});
     customerAddressForm.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -344,7 +376,16 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify(Object.fromEntries(form.entries())),
       });
       const payload = await response.json();
-      messageEl.textContent = response.ok ? 'Doorstep address saved.' : (payload.error?.message || 'Unable to save address.');
+      if (!response.ok) {
+        messageEl.textContent = payload.error?.message || 'Unable to save address.';
+        return;
+      }
+      messageEl.textContent = '';
+      const panel = document.querySelector('#customer-address-panel');
+      const hurray = document.querySelector('#address-hurray');
+      if (panel) panel.hidden = true;
+      if (hurray) hurray.hidden = false;
+      document.querySelector('#hurray-dismiss')?.addEventListener('click', () => { hurray.hidden = true; }, { once: true });
     });
   }
   if (serviceGroups) {
@@ -401,6 +442,22 @@ document.addEventListener('DOMContentLoaded', () => {
       if (payoutForm && payout?.configured) {
         payoutForm.elements.account_holder_name.value = payout.account_holder_name || '';
         payoutForm.elements.ifsc_code.value = payout.ifsc_code || '';
+      }
+      const steps = [
+        { label: 'City & category', done: Boolean(data.profile?.city && data.profile?.category) },
+        { label: 'Portfolio work uploaded', done: (data.portfolio || []).length > 0 },
+        { label: 'Payout bank details', done: Boolean(payout?.configured) },
+      ];
+      const completed = steps.filter((step) => step.done).length;
+      const pct = Math.round((completed / steps.length) * 100);
+      const ring = document.querySelector('#profile-ring');
+      if (ring) {
+        ring.style.setProperty('--pct', String(pct));
+        ring.dataset.label = `${pct}%`;
+      }
+      const checklist = document.querySelector('#profile-checklist');
+      if (checklist) {
+        checklist.innerHTML = steps.map((step) => `<span class="${step.done ? 'done' : ''}">${step.done ? '✓' : '○'} ${step.label}</span>`).join('');
       }
       renderPortfolio(data.portfolio);
     }).catch((error) => { document.querySelector('#artisan-error').textContent = error.message; });

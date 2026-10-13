@@ -15,7 +15,18 @@
       .customer-top { display:flex; align-items:end; justify-content:space-between; gap:20px; margin-bottom:32px; }
       .customer-top h1 { margin:20px 0 8px; font-size:clamp(2.4rem, 4vw, 3.6rem); }
       .service-tools { display:grid; grid-template-columns:minmax(220px,1fr) minmax(170px,.5fr) minmax(190px,.55fr); gap:10px; margin:28px 0 36px; }
-      .service-tools input,.service-tools select { min-height:48px; border:1px solid var(--border); background:#fff; border-radius:9px; padding:0 14px; color:var(--text); }
+      .service-tools input { min-height:48px; border:1px solid var(--border); background:#fff; border-radius:9px; padding:0 14px; color:var(--text); }
+      .service-tools select.ezha-filter-select {
+        min-height:48px; border:1px solid #7f1d1d; border-radius:9px; padding:0 14px;
+        background: linear-gradient(135deg, #047857 0%, #b91c1c 55%, #991b1b 100%);
+        color: #fde047; font-weight: 700; text-shadow: 0 0 12px rgba(253, 224, 71, 0.65);
+        box-shadow: 0 0 18px rgba(5, 150, 105, 0.35);
+      }
+      .hurray-overlay { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(20,16,12,0.55); z-index: 200; padding: 24px; }
+      .hurray-overlay[hidden] { display: none; }
+      .hurray-card { background: linear-gradient(160deg, #fff9e8, #fff); border: 2px solid rgba(201,162,39,0.5); border-radius: 24px; padding: 36px 32px; text-align: center; max-width: 420px; box-shadow: 0 24px 60px rgba(0,0,0,0.2); animation: hurray-pop 0.45s ease; }
+      .hurray-card h2 { margin: 12px 0 8px; font-size: 2rem; color: var(--primary); }
+      @keyframes hurray-pop { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
       .service-tools input { flex:1; min-width:0; }
       .service-group { margin-top:34px; }
       .service-group h2 { font-size:1.8rem; margin-bottom:18px; }
@@ -41,9 +52,9 @@
     </style>
   </head>
   <body data-requires-role="CUSTOMER">
-    <header class="site-header"><div class="container navbar"><a class="brand" href="/" aria-label="EZHA home"><img class="brand-logo" src="/static/assets/ezha-logo.png" alt="EZHA | The Signature of Success" /></a><nav class="customer-nav"><a href="/customer/services">Discover</a><a href="/explore">Artists</a><button class="btn btn-secondary" type="button" data-logout>Sign out</button></nav></div></header>
+    <header class="site-header"><div class="container navbar"><a class="brand" href="/" aria-label="EZHA home"><img class="brand-logo" src="/static/assets/ezha-logo.png" alt="EZHA | The Signature of Success" /></a><nav class="customer-nav"><a href="/customer/services">Discover</a><button class="btn btn-secondary" type="button" data-logout>Sign out</button></nav></div></header>
     <main class="container customer-main">
-      <div class="customer-top"><div><span class="eyebrow">Customer space</span><h1>Beauty at your doorstep.</h1><p>Book bridal makeup, mehendi, and styling at home. Tailoring & saree work: send your outfit to the artisan and receive it back when ready.</p></div><a href="/explore" class="btn btn-secondary">Browse artists</a></div>
+      <div class="customer-top"><div><span class="eyebrow">Customer space</span><h1>Beauty at your doorstep.</h1><p>Book bridal makeup, mehendi, and styling at home. Tailoring & saree work: send your outfit to the artisan and receive it back when ready.</p></div></div>
       <section class="artisan-card" id="customer-address-panel" style="margin-bottom:28px">
         <h2 style="margin-top:0;font-size:1.35rem">Your service address</h2>
         <p>Artists travel to this address for doorstep services.</p>
@@ -58,9 +69,17 @@
         </form>
         <p id="customer-address-message" role="status" style="color:var(--primary);margin-top:10px"></p>
       </section>
-      <div class="service-tools"><input id="service-search" type="search" placeholder="Search artisans and their work" aria-label="Search artisans and works" /><select id="category-filter" aria-label="Filter by work category"><option value="">All categories</option><option value="MAKEUP">Makeup</option><option value="MEHENDI">Mehendi</option><option value="DRESS">Dress</option><option value="FULL_PACKAGE">Full package</option></select><select id="city-filter" aria-label="Filter by city"><option value="">All cities</option><option>Bengaluru</option><option>Chennai</option><option>Delhi</option><option>Mumbai</option></select></div>
+      <div class="service-tools"><input id="service-search" type="search" placeholder="Search artisans and their work" aria-label="Search artisans and works" /><select class="ezha-filter-select" id="category-filter" aria-label="Filter by work category"><option value="">All categories</option><option value="MAKEUP">Makeup</option><option value="MEHENDI">Mehendi</option><option value="DRESS">Dress</option><option value="FULL_PACKAGE">Full package</option></select><select class="ezha-filter-select" id="city-filter" aria-label="Filter by city"><option value="">All cities</option><option>Bengaluru</option><option>Chennai</option><option>Delhi</option><option>Mumbai</option></select></div>
       <div id="service-groups" aria-live="polite"><p class="empty-state">Loading artisans and works…</p></div>
     </main>
+    <div class="hurray-overlay" id="address-hurray" hidden role="dialog" aria-labelledby="hurray-title">
+      <div class="hurray-card">
+        <div style="font-size:3rem">🎉</div>
+        <h2 id="hurray-title">Hurray!</h2>
+        <p>Your doorstep address is saved. Artists will travel to you for premium at-home services.</p>
+        <button type="button" class="btn btn-primary" id="hurray-dismiss">Continue exploring</button>
+      </div>
+    </div>
     <script src="/static/js/common.js"></script>
     <script src="/static/js/portal.js"></script>
   </body>
