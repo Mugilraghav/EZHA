@@ -91,6 +91,21 @@ def update_customer_profile():
     return jsonify({"success": True, "data": {"profile": _serialize_customer_profile(profile)}, "message": "Doorstep address saved"}), 200
 
 
+@bp.get("/cities")
+def list_service_cities():
+    claims, error = _customer_claims()
+    if error:
+        return error
+    with current_app.extensions["ezha_session_factory"]() as session:
+        rows = session.scalars(
+            select(ArtisanProfile.city)
+            .join(User, User.id == ArtisanProfile.artisan_id)
+            .where(User.role == "ARTISAN", ArtisanProfile.city != "")
+        ).all()
+    cities = sorted({city.strip() for city in rows if city and city.strip()}, key=str.casefold)
+    return jsonify({"success": True, "data": {"cities": cities}}), 200
+
+
 @bp.get("/works")
 def list_works():
     claims, error = _customer_claims()

@@ -135,3 +135,24 @@ def initialize_database(app: Flask) -> None:
                         profile.account_holder_name = "Ananya Demo"
                         profile.account_number = "123456789012"
                         profile.ifsc_code = "HDFC0001234"
+
+    admin_password = (app.config.get("ADMIN_PASSWORD") or "").strip()
+    if admin_password:
+        with session_factory.begin() as session:
+            admin_user = session.scalar(
+                select(User).where(or_(User.username == "admin", User.email == "admin@demo.ezha"))
+            )
+            if admin_user is None:
+                admin_user = User(
+                    username="admin",
+                    email="admin@demo.ezha",
+                    name="EZHA Admin",
+                    password_hash=generate_password_hash(admin_password),
+                    role="ADMIN",
+                    phone="",
+                    email_verified=True,
+                    phone_verified=True,
+                )
+                session.add(admin_user)
+            else:
+                admin_user.password_hash = generate_password_hash(admin_password)

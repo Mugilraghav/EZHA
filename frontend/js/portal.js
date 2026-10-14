@@ -405,8 +405,23 @@ document.addEventListener('DOMContentLoaded', () => {
     category: work.category,
   });
 
+  const populateCityFilter = async () => {
+    const select = document.querySelector('#city-filter');
+    if (!select) return;
+    try {
+      const data = await apiGet('/api/v1/customers/cities');
+      const cities = data.cities || [];
+      const selected = select.value;
+      select.innerHTML = `<option value="">All cities</option>${cities.map((city) => `<option value="${escapeHtml(city)}">${escapeHtml(city)}</option>`).join('')}`;
+      if (selected && cities.includes(selected)) select.value = selected;
+    } catch {
+      /* keep All cities only */
+    }
+  };
+
   if (serviceGroups) {
     let currentPage = 1;
+    populateCityFilter();
     const renderWorksPage = async () => {
       const q = document.querySelector('#service-search')?.value.trim() || '';
       const category = document.querySelector('#category-filter')?.value || '';
