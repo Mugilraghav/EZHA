@@ -22,7 +22,12 @@
       .auth-intro { margin-bottom: 26px; }
       .auth-form { display: grid; gap: 16px; }
       .auth-form label { display: grid; gap: 7px; font-size: .88rem; font-weight: 600; }
-      .auth-form input, .auth-form select { min-height: 50px; width: 100%; padding: 0 14px; border: 1px solid var(--border); border-radius: 10px; background: white; color: var(--text); }
+      .auth-form input { min-height: 50px; width: 100%; padding: 0 14px; border: 1px solid var(--border); border-radius: 10px; }
+      .auth-form select {
+        min-height: 50px; width: 100%; padding: 0 14px; border: 1px solid rgba(6, 59, 50, 0.35); border-radius: 10px;
+        background: #ffffff; color: #1a1a1a; font-weight: 600;
+      }
+      .auth-form select option { color: #1a1a1a; background: #ffffff; }
       .auth-form .btn { width: 100%; margin-top: 6px; }
       .auth-message { min-height: 24px; color: var(--primary); font-size: .9rem; }
       .auth-message[data-error="true"] { color: #a42336; }

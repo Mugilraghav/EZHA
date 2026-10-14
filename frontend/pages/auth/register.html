@@ -22,7 +22,12 @@
       .auth-intro { margin-bottom: 24px; }
       .auth-form { display: grid; gap: 13px; }
       .auth-form label { display: grid; gap: 7px; font-size: .88rem; font-weight: 600; }
-      .auth-form input, .auth-form select { min-height: 48px; width: 100%; padding: 0 14px; border: 1px solid var(--border); border-radius: 10px; background: white; color: var(--text); }
+      .auth-form input { min-height: 48px; width: 100%; padding: 0 14px; border: 1px solid var(--border); border-radius: 10px; }
+      .auth-form select {
+        min-height: 48px; width: 100%; padding: 0 14px; border: 1px solid rgba(6, 59, 50, 0.35); border-radius: 10px;
+        background: #ffffff; color: #1a1a1a; font-weight: 600;
+      }
+      .auth-form select option { color: #1a1a1a; background: #ffffff; }
       .artisan-fields { display: grid; gap: 13px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: rgba(255,255,255,.65); }
       .otp-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
       .otp-row .btn { min-height: 48px; }
@@ -50,12 +55,12 @@
             <label>Your name<input name="name" autocomplete="name" required /></label>
             <label>Email<input name="email" type="email" autocomplete="email" required /></label>
             <div class="otp-row">
-              <label style="flex:1">Email verification code<input name="email_otp" inputmode="numeric" maxlength="6" placeholder="6-digit code" /></label>
+              <label style="flex:1">Email verification code<input name="email_otp" inputmode="numeric" maxlength="6" placeholder="6-digit code" required /></label>
               <button class="btn btn-secondary" type="button" data-send-otp="email">Send</button>
             </div>
             <label>Mobile number<input name="phone" inputmode="tel" autocomplete="tel" required /></label>
             <div class="otp-row">
-              <label style="flex:1">Mobile verification code<input name="phone_otp" inputmode="numeric" maxlength="6" placeholder="6-digit code" /></label>
+              <label style="flex:1">Mobile verification code<input name="phone_otp" inputmode="numeric" maxlength="6" placeholder="6-digit code" required /></label>
               <button class="btn btn-secondary" type="button" data-send-otp="phone">Send</button>
             </div>
             <label>Password<input name="password" type="password" autocomplete="new-password" minlength="8" required /></label>

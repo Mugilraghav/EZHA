@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const field = channel === 'email' ? 'email_otp' : 'phone_otp';
             if (registerForm.elements[field]) registerForm.elements[field].value = payload.data.dev_code;
           }
-          showMessage(`Verification code sent to your ${channel}.`);
+          showMessage(payload.message || `Verification code sent to your ${channel}. Check your inbox or SMS.`);
         } catch (error) {
           showMessage(error.message, true);
         }

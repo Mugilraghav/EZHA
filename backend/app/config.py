@@ -27,5 +27,14 @@ class Config:
     SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL", "vimala8121983@gmail.com")
     PORTFOLIO_LISTING_BUFFER_MINUTES = int(os.getenv("PORTFOLIO_LISTING_BUFFER_MINUTES", "15"))
     ORDER_ACCEPTANCE_HOURS = int(os.getenv("ORDER_ACCEPTANCE_HOURS", "3"))
+    SMTP_HOST = os.getenv("SMTP_HOST", "")
+    SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
+    SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+    SMTP_FROM = os.getenv("SMTP_FROM", "")
+    SMTP_USE_TLS = os.getenv("SMTP_USE_TLS", "true")
+    TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
+    TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
+    TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER", "")
     DEBUG = APP_ENV == "development"
     TESTING = os.getenv("APP_ENV") == "testing"

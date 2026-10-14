@@ -20,13 +20,13 @@
     <link rel="stylesheet" href="/static/css/responsive.css" />
     <style>
       .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: linear-gradient(135deg, #7f1d1d, #059669); color: #fde68a; font-weight: 800; font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase; box-shadow: 0 0 24px rgba(5, 150, 105, 0.35); }
-      .quote-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 28px; }
-      .quote-card { border: 1px solid var(--border); border-radius: 18px; padding: 22px; background: rgba(255,255,255,0.72); font-style: italic; color: var(--muted); }
-      .quote-card strong { display: block; margin-top: 12px; font-style: normal; color: var(--text); }
+      .vision-quote { margin-top: 24px; padding: 28px 26px; border-radius: 18px; background: #ffffff; border: 1px solid rgba(6, 59, 50, 0.12); box-shadow: 0 12px 32px rgba(0,0,0,0.06); }
+      .vision-quote p { margin: 0; font-size: 1.25rem; line-height: 1.55; color: #111111; font-style: italic; }
+      .vision-quote strong { display: block; margin-top: 14px; font-style: normal; color: #1a1a1a; font-size: 0.95rem; }
       .vision-panel { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 32px; align-items: center; }
       .founder-card { display: flex; gap: 20px; align-items: center; margin-top: 36px; padding: 24px; border-radius: 22px; border: 1px solid var(--border); background: var(--surface-elevated); }
       .founder-card img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(201,162,39,0.45); }
-      @media (max-width: 900px) { .quote-grid, .vision-panel { grid-template-columns: 1fr; } }
+      @media (max-width: 900px) { .vision-panel { grid-template-columns: 1fr; } }
     </style>
   </head>
   <body>
@@ -131,16 +131,10 @@
               EZHA was built so you never compromise on quality or convenience. From the first bridal trial to the
               last stitch on your blouse, every service comes to you — verified, insured, and worthy of your signature moment.
             </p>
-            <div class="quote-grid">
-              <blockquote class="quote-card">“Luxury is not a venue — it is showing up for you, wherever you are.”<strong>— EZHA promise</strong></blockquote>
-              <blockquote class="quote-card">“We don't just book artists; we deliver trust at your threshold.”<strong>— Customer charter</strong></blockquote>
-              <blockquote class="quote-card">“Every artisan on EZHA earns dignity, visibility, and fair payout.”<strong>— Artisan pledge</strong></blockquote>
-            </div>
-            <div class="quote-grid" style="margin-top: 14px">
-              <blockquote class="quote-card">“Your home becomes the salon; your calendar becomes lighter.”<strong>— Doorstep manifesto</strong></blockquote>
-              <blockquote class="quote-card">“#1 because we showed up first — and we keep showing up.”<strong>— EZHA platform</strong></blockquote>
-              <blockquote class="quote-card">“Premium is personal. Personal is EZHA.”<strong>— Brand belief</strong></blockquote>
-            </div>
+            <blockquote class="vision-quote">
+              <p>“Premium service at your doorstep — #1 in India for every beauty need, delivered where you are.”</p>
+              <strong>— EZHA · Signature of success</strong>
+            </blockquote>
             <div class="founder-card">
               <img id="founder-image" src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80" alt="EZHA founder" />
               <div>

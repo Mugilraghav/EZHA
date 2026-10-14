@@ -15,6 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from backend.app.models.user import ArtisanProfile, CustomerProfile, OtpChallenge, User
+from backend.app.services.otp_delivery import OtpDeliveryError, deliver_otp
 
 
 def normalize_phone(value: str) -> str:
@@ -75,8 +76,12 @@ class SimpleAuthService:
                     expires_at=expires_at,
                 )
             )
+        try:
+            deliver_otp(channel, dest, code, purpose)
+        except OtpDeliveryError as exc:
+            raise ValueError(str(exc)) from exc
         payload: Dict[str, Any] = {"channel": channel, "destination": dest, "expires_in_seconds": 900}
-        if current_app.config.get("APP_ENV") != "production":
+        if current_app.config.get("APP_ENV") != "production" and not current_app.config.get("TESTING"):
             payload["dev_code"] = code
         return payload
 
