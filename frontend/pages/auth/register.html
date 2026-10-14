@@ -43,7 +43,7 @@
     <main class="auth-layout">
       <section class="auth-visual">
         <a class="brand" href="/" aria-label="EZHA home"><img class="brand-logo" src="/static/assets/ezha-logo.png" alt="EZHA | The Signature of Success" /></a>
-        <div><span class="eyebrow" style="color:white;background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.2)">A marketplace for craft</span><h1>Your next chapter starts here.</h1><p>Verify your email and mobile. We create your username automatically.</p></div>
+        <div><span class="eyebrow" style="color:white;background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.2)">A marketplace for craft</span><h1>Your next chapter starts here.</h1><p>We create your username automatically from your details.</p></div>
       </section>
       <section class="auth-main">
         <div class="auth-form-wrap">
@@ -54,15 +54,7 @@
             <label>Create account as<select name="role" id="register-role" required><option value="CUSTOMER">Customer</option><option value="ARTISAN">Artisan</option></select></label>
             <label>Your name<input name="name" autocomplete="name" required /></label>
             <label>Email<input name="email" type="email" autocomplete="email" required /></label>
-            <div class="otp-row">
-              <label style="flex:1">Email verification code<input name="email_otp" inputmode="numeric" maxlength="6" placeholder="6-digit code" required /></label>
-              <button class="btn btn-secondary" type="button" data-send-otp="email">Send</button>
-            </div>
             <label>Mobile number<input name="phone" inputmode="tel" autocomplete="tel" required /></label>
-            <div class="otp-row">
-              <label style="flex:1">Mobile verification code<input name="phone_otp" inputmode="numeric" maxlength="6" placeholder="6-digit code" required /></label>
-              <button class="btn btn-secondary" type="button" data-send-otp="phone">Send</button>
-            </div>
             <label>Password<input name="password" type="password" autocomplete="new-password" minlength="8" required /></label>
             <div class="artisan-fields" id="artisan-fields" hidden>
               <p style="font-size:.88rem;color:var(--muted)">Complete bank details in your artisan portal after sign-in.</p>

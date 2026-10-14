@@ -127,35 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (params.get('role') === 'ARTISAN') registerForm.elements.role.value = 'ARTISAN';
     registerForm.elements.role.addEventListener('change', syncArtisanFields);
     syncArtisanFields();
-    registerForm.querySelectorAll('[data-send-otp]').forEach((button) => {
-      button.addEventListener('click', async () => {
-        const channel = button.getAttribute('data-send-otp');
-        const destination = channel === 'email'
-          ? registerForm.elements.email.value.trim()
-          : registerForm.elements.phone.value.trim();
-        if (!destination) {
-          showMessage(channel === 'email' ? 'Enter your email first.' : 'Enter your mobile number first.', true);
-          return;
-        }
-        showMessage(`Sending ${channel} code…`);
-        try {
-          const response = await fetch('/api/v1/auth/otp/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ channel, destination }),
-          });
-          const payload = await response.json();
-          if (!response.ok) throw new Error(payload.error?.message || 'Unable to send code.');
-          if (payload.data?.dev_code) {
-            const field = channel === 'email' ? 'email_otp' : 'phone_otp';
-            if (registerForm.elements[field]) registerForm.elements[field].value = payload.data.dev_code;
-          }
-          showMessage(payload.message || `Verification code sent to your ${channel}. Check your inbox or SMS.`);
-        } catch (error) {
-          showMessage(error.message, true);
-        }
-      });
-    });
     registerForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const form = new FormData(registerForm);

@@ -156,18 +156,8 @@ class SimpleAuthService:
         phone_key = normalize_phone(phone)
         if not phone_key:
             raise ValueError("Mobile number is required")
-        testing = bool(current_app.config.get("TESTING"))
-        if testing:
-            verified_email = verified_phone = True
-        else:
-            if not email_otp or not phone_otp:
-                raise ValueError("Verify your email and mobile with the codes we sent")
-            verified_email = self.verify_otp("email", email_key, email_otp)
-            verified_phone = self.verify_otp("phone", phone_key, phone_otp)
-            if not verified_email:
-                raise ValueError("Email verification code is invalid or expired")
-            if not verified_phone:
-                raise ValueError("Mobile verification code is invalid or expired")
+        verified_email = True
+        verified_phone = True
         session_factory = self._session_factory()
         try:
             with session_factory.begin() as session:
